@@ -1,3 +1,24 @@
-# Overview
+# Introduction
 
 Welcome! This is the technical documentation for the Serenity project.
+
+Serenity is knowledge management application offering workspaces for teams to collaborate on pages. Serenity is end-to-end encrypted, meaning that only the users can access the content.
+
+## High level terminology
+
+- `Page` is a single WYIWYG document.
+- `Folder` is a container for pages or other folders.
+- `User` is a person who can log in to the application.
+- `Workspace` is the entity that combines a set of folders and pages and have a set of users with access to it.
+
+## High level sharing
+
+The content of Each
+
+## High level architecture
+
+While the server can not access any of the content the clients rely on the server to reliably forward the encrypted information and unencrypted meta-data to the other users. In addition to that a sever does several checks to also prevent that clients receive information that they are not allowed to see or entries from other users without authorization.
+
+## Meta data
+
+There is a lot of meta data associated with each entity. While we would like to reduce the amount of meta-data that the server stores, this was not in scope of the initial version of Serenity. Further research in the future in areas like zero-knowledge protocols might allow us to reduce the amount of meta-data that the server stores.
