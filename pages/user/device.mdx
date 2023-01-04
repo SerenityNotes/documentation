@@ -1,7 +1,71 @@
 # Device
 
-TODO (structure of a sevice - encryption, signature keys and signed encryption keys)
+A Device always belongs to a user and is used to make sure the user can access their data from multiple devices.
+
+## Why not have a single Device per user?
+
+The main reason is to allow the user to invalidate a Device without invalidating their entire account. This is useful if a device e.g. a mobile phone is lost or stolen.
+
+Other reasons:
+
+- There is no access to Secure Element on the web and in order to allow users still access through a web-interface, a Device is created for them and either only stored in memory or only valid for 30 days.
+
+**Note**: The 30 day limit is not implemented yet.
 
 ## MainDevice
 
 The `MainDevice` is only held in memory when decrypted and never stored in any kind of local storage regardless if it is a Web, mobile or desktop client.
+
+## Structure of a Device
+
+A `Device` consists of a:
+
+- Signature Key Pair
+- Encryption Key Pair
+- Signature of the Encryption Public Key with the Signature Private Key
+
+The purpose of the signature is to verify that
+
+Code references:
+
+- https://github.com/SerenityNotes/Serenity/blob/main/packages/common/src/createDevice/createDevice.ts
+- https://github.com/SerenityNotes/Serenity/blob/main/packages/common/src/verifyDevice/verifyDevice.ts
+
+### Signature Key Pair
+
+For the signature key pair, we use the `Ed25519` algorithm which is generated using Libsodium's `crypto_sign_keypair()`.
+
+https://github.com/SerenityNotes/Serenity/blob/main/packages/common/src/createDevice/createDevice.ts
+
+### Encryption Key Pair
+
+For the encryption key pair, we use the `X25519` algorithm which is generated using Libsodium's `crypto_box_keypair()`. The public key is then signed with the signature key pair using Libsodium's `crypto_sign_detached()`.
+
+## Storing private keys
+
+Ideally we would use a secure storage like the `Secure Enclave` on iOS or the `KeyStore` on Android. However, this is not possible in a web browser and therefor certain compromises had been made. We hope in the future access to Secure Element will be available in the browser. See https://globalplatform.github.io/WebApis-for-SE/doc/
+
+### iOS and Android
+
+The `expo-secure-store` package is used to store a `Device` using Keychain on iOS and KeyStore on Android. Both leverage a Secure Element to keep the data secure.
+
+Code reference: https://github.com/SerenityNotes/Serenity/blob/main/apps/app/utils/device/deviceStore.ts
+
+### Web
+
+There are two different ways how we store a `Device` on the web:
+
+- SessionStorage
+- LocalStorage
+
+When logging in through the web-interface there is checkbox to choose whether the user should be logged in for 30 days. If the user chooses to be logged in for 30 days, the `Device` is stored in `LocalStorage`. If the user chooses not to be logged in for 30 days, the `Device` is stored in `SessionStorage`.
+
+**Note**: This is only partially implemented. Specifically the 30 day limitation is not verified anywhere yet.
+
+Code reference: https://github.com/SerenityNotes/Serenity/blob/main/apps/app/utils/device/webDeviceStore.ts
+
+### Desktop
+
+**Note**: This is not implemented yet.
+
+We plan to use Apple's `Keychain` on macOS and `Secret Service` on Linux and `Windows Credential Manager` on Windows.
