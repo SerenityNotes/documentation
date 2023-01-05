@@ -1,0 +1,45 @@
+# Threat Model
+
+## Accepted Risks and Assumptions
+
+### Malicious users
+
+Currently there are very limited checks agains mallicious users. A user for example could create a client that creates broken documents.
+
+TODO add specific examples and details
+
+### Invitation links
+
+The invitation links are supposed to be shared through another system. Therefor
+
+#### Man-in-the-middle attack
+
+In case of a man-in-the-middle attack the attacker could
+
+- use the link to get access to the workspace
+- replace the link with a link to another workspace
+
+#### Leaked data containing invitation links
+
+Invitation links are only valid for a certain time-frame (48h). This means within this time-frame a leaked invitation link can be used to get access to the workspace.
+
+Background:
+
+#### Possible improvements to reduce the risk:
+
+- Double opt-in: A workspace admin has to confirm the request to join the workspace after the invitee has clicked the link and accepted the invitation to join the workspace
+- Promote in-person sharing by allowing to create QR-Code
+
+## Malicious clients
+
+The security of the application relies on the clients beeing implemented correctly and not leaking any data or doing any malicious actions.
+
+It is assumed that the AppStore and Google Play Store will not serve a malicious application version to one or multiple users.
+
+It is assumed that there is no successful man-in-the-middle attack on the client-server communication for the web client. Otherwise the server could inject malicious code that exposes content to the attacker.
+
+## Malicious server
+
+It is assumed that the server will not withhold any data to any client. The server can never inject valid content by design, but could try to inject invalid content. In case that is happening clients should dedect this and warn the user in the UI.
+
+TODO specify these cases and link to them

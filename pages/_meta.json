@@ -1,6 +1,8 @@
 {
   "index": "Overview",
-  "page": "Page",
   "user": "User",
+  "workspace": "Workspace",
+  "page": "Page",
+  "threat_model": "Thread Model",
   "miscellaneous": "Miscellaneous"
 }
