@@ -9,12 +9,24 @@ The main reason is to allow the user to invalidate a Device without invalidating
 Other reasons:
 
 - There is no access to Secure Element on the web and in order to allow users still access through a web-interface, a Device is created for them and either only stored in memory or only valid for 30 days.
+- Devices also reduce the risk of a user to completely loose their data e.g. when they lose their password.
+
+Unfortionatly this decision also comes with some downsides:
+
+- Need to encrypt for multiple device
+- Need to manage the authenticity of multiple devices
 
 **Note**: The 30 day limit is not implemented yet.
 
 ## MainDevice
 
 The `MainDevice` is only held in memory when decrypted and never stored in any kind of local storage regardless if it is a Web, mobile or desktop client.
+
+## RecoveryDevice
+
+The `RecoveryDevice` is planned for the future and it will be able to recover a user's account if they lose access to their `MainDevice`.
+
+**Note**: Not yet specified in detail nor implemented.
 
 ## Structure of a Device
 
@@ -69,3 +81,9 @@ Code reference: https://github.com/SerenityNotes/Serenity/blob/main/apps/app/uti
 **Note**: This is not implemented yet.
 
 We plan to use Apple's `Keychain` on macOS and `Secret Service` on Linux and `Windows Credential Manager` on Windows.
+
+## Device Signature Chain
+
+In order to verify that a `Device` belongs to a certain user each user has a `DeviceSignatureChain`. It is a chain of events (add or remove device) each signed with the main device and the previous event from which a finite set of active device can be derived.
+
+**Note**: This is not implemented yet.
