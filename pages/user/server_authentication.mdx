@@ -10,6 +10,14 @@ TODO add information about session/device relationship including device revocati
 
 TODO link to the Schema, finishLogin mutation and the authenticate function
 
+## Websocket Connections
+
+For the staging and production environments a `wss` connection is required. The websocket connection is authenticated by sending the `sessionKey` as a query parameter.
+
+```js
+`${host}/${docId}?sessionKey=${sessionKey}`;
+```
+
 ## Possible Improvement
 
 In our threat model we assume a HTTPS connection to the server is secure and can't be intercepted. This assumption could be reduces (not eliminated) by encrypting each request to a server and response back to the client with the `session_key`.

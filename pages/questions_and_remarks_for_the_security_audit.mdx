@@ -1,0 +1,22 @@
+# Questions and Remarks for the Security Audit
+
+Repositories:
+
+- https://github.com/SerenityNotes/react-native-libsodium
+- https://github.com/SerenityNotes/serenity
+
+## React-Native-Libsodium
+
+- Is the `memcpy` appraoch fine?
+
+## HTTPS connections
+
+- Are there any HTTP security feautes we should activate? (e.g. HSTS)
+
+## Websocket Connections
+
+- Is the `sessionKey` authentication as a query parameter secure enough or what are proposed alternatives?
+- Should the `Origin` header be verified to basically simuate CORS checking? Does it provide any additional security in this case?
+- Should the `Sec-WebSocket-Protocol` header be verified to basically simulate CORS checking? Does it provide any additional security in this case?
+- Is the `webSocketServer` setup fine or should we restrict `maxPayload` for example?
+- Is `webSocketServer.handleUpgrade` handled correctly?
