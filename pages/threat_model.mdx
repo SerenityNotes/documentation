@@ -44,6 +44,27 @@ It is assumed that the server will not withhold any data to any client. The serv
 
 TODO specify these cases and link to them
 
+Example case:
+
+- The server can not add a user to the members of a workspace.
+- The server can not add a device to a user.
+- The server can not add a folder to a workspace.
+- The server can not add a document to a folder.
+
+This also includes replay attacks:
+
+- The server can not add a previously added user again to the members of a workspace.
+- The server can not add a previously added device again to a user.
+- The server can not add a previously added folder again to a workspace.
+- The server can not add a previously added document again to a folder.
+
+What a server can do:
+
+- The server can withold the information that a new user has been added as member to a workspace.
+- The server can withold the information that a new device has been added to a user.
+- The server can withold the information that a new folder has been added to a workspace.
+- The server can withold the information that a new document has been added to a folder.
+
 ## References
 
 - https://www.securesoftware.org/ossssd/introduction.html
