@@ -1,0 +1,23 @@
+attacker[active]
+
+principal Device[
+	knows private sign_private
+	sign_public = G^sign_private
+	knows private enc_private
+	enc_public = G^enc_private
+	enc_public_signature = SIGN(sign_private, enc_public)
+]
+
+principal Alice[
+]
+
+Device -> Alice: sign_public, enc_public, enc_public_signature
+
+principal Alice[
+	valid_device = SIGNVERIF(sign_public, enc_public, enc_public_signature)?
+]
+
+queries[
+	confidentiality? sign_private
+	confidentiality? enc_private
+]

@@ -1,0 +1,81 @@
+attacker[active]
+
+principal Alice_maindevice[
+	knows private alice_main_sign_private
+	alice_main_sign_public = G^alice_main_sign_private
+	knows private alice_main_enc_private
+	alice_main_enc_public = G^alice_main_enc_private
+	alice_main_enc_public_signature = SIGN(alice_main_sign_private, alice_main_enc_public)
+]
+
+principal Bob[
+]
+
+Alice_maindevice -> Bob: [alice_main_sign_public]
+
+principal Alice_device1[
+	knows private alice_1_sign_private
+	alice_1_sign_public = G^alice_1_sign_private
+	knows private alice_1_enc_private
+	alice_1_enc_public = G^alice_1_enc_private
+	alice_1_enc_public_signature = SIGN(alice_1_sign_private, alice_1_enc_public)
+]
+
+Alice_device1 -> Alice_maindevice: alice_1_sign_public, alice_1_enc_public, alice_1_enc_public_signature
+
+principal Alice_maindevice[
+	valid_device_1 = SIGNVERIF(alice_1_sign_public, alice_1_enc_public, alice_1_enc_public_signature)?
+	alice_device_1 = CONCAT(alice_1_sign_public, alice_1_enc_public, alice_1_enc_public_signature)
+	sig_chain_entry_1 = SIGN(alice_main_sign_private, alice_device_1)
+]
+
+Alice_maindevice -> Bob: sig_chain_entry_1
+
+Alice_device1 -> Bob: alice_1_sign_public, alice_1_enc_public, alice_1_enc_public_signature
+
+principal Bob[
+	alice_device_1_1 = CONCAT(alice_1_sign_public, alice_1_enc_public, alice_1_enc_public_signature)
+	valid_sig_chain_entry_1 = SIGNVERIF(alice_main_sign_public, alice_device_1_1, sig_chain_entry_1)?
+	valid_alice_device_1 = SIGNVERIF(alice_1_sign_public, alice_1_enc_public, alice_1_enc_public_signature)?
+]
+
+principal Alice_device2[
+	knows private alice_2_sign_private
+	alice_2_sign_public = G^alice_2_sign_private
+	knows private alice_2_enc_private
+	alice_2_enc_public = G^alice_2_enc_private
+	alice_2_enc_public_signature = SIGN(alice_2_sign_private, alice_2_enc_public)
+]
+
+Alice_device2 -> Alice_maindevice: alice_2_sign_public, alice_2_enc_public, alice_2_enc_public_signature
+
+principal Alice_maindevice[
+	valid_device_2 = SIGNVERIF(alice_2_sign_public, alice_2_enc_public, alice_2_enc_public_signature)?
+	alice_device_2 = CONCAT(alice_2_sign_public, alice_2_enc_public, alice_2_enc_public_signature)
+	sig_chain_entry_2 = SIGN(alice_main_sign_private, CONCAT(alice_device_2, sig_chain_entry_1))
+]
+
+Alice_maindevice -> Bob: sig_chain_entry_2
+
+Alice_device2 -> Bob: alice_2_sign_public, alice_2_enc_public, alice_2_enc_public_signature
+
+principal Bob[
+	alice_device_2_1 = CONCAT(alice_2_sign_public, alice_2_enc_public, alice_2_enc_public_signature)
+	valid_sig_chain_entry_2 = SIGNVERIF(alice_main_sign_public, CONCAT(alice_device_2_1, sig_chain_entry_1), sig_chain_entry_2)?
+	valid_alice_device_2 = SIGNVERIF(alice_2_sign_public, alice_2_enc_public, alice_2_enc_public_signature)?
+]
+
+queries[
+	confidentiality? alice_main_sign_private
+	confidentiality? alice_main_sign_private
+	confidentiality? alice_1_sign_private
+	confidentiality? alice_1_enc_private
+	confidentiality? alice_2_sign_private
+	confidentiality? alice_2_enc_private
+	authentication? Alice_device1 -> Bob: alice_1_sign_public
+	authentication? Alice_device1 -> Bob: alice_1_enc_public
+	authentication? Alice_device1 -> Bob: alice_1_enc_public_signature
+	authentication? Alice_device2 -> Bob: alice_2_sign_public
+	authentication? Alice_device2 -> Bob: alice_2_enc_public
+	authentication? Alice_device2 -> Bob: alice_2_enc_public_signature
+]
