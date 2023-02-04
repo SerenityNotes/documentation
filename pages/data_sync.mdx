@@ -1,0 +1,94 @@
+# Data Synchronization
+
+Due the fact that some clients store data locally we need a way to inform them about removed items as well as an efficient way to only retrieve updates items in some cases. There is two approaches we settled on:
+
+- [Approach: Disclosure](#approach-disclosure)
+- [Approach: Chain](#approach-chain)
+
+## Approach: Disclosure
+
+In this version a client can store an item or a list of items on client. Everytime the client requests an update the clients sends along the ID or a list of IDs of the stored items.
+
+The server retrieves all items available items. In case the server received an ID that is not in the list the server will look up the tombstones for this item type and return it.
+
+Tombstones are created whenever an item is deleted. They are stored in a separate collection and contain the ID of the deleted item, datetime of the deletion and most of the time a signature.
+
+In case no items are stored on the client the server will return all items.
+
+### When to use it
+
+This is only useful for single items or small lists where the entire list can be retrieved efficiently on the server.
+
+### Example
+
+- Fetching the current user.
+- Fetching a list of workspaces.
+
+## Approach: Chain
+
+In this version a client can store an item or a list of items on client. In addition to that the client will also store the last chain entry including it's update counter it is aware of.
+
+Everytime the client requests an update the clients sends along the last known chain item with the counter. The server will return the new chain entries as wells the other items that have changed since then.
+
+The client then can resolve the new state.
+
+In case no last chain entry is sent along to the server, the server will return the chain from the beginning and all items that have changed since then.
+
+### When to use it
+
+This is supposed to be used for larger lists where the entire list cannot be retrieved efficiently on the server.
+
+### Structure
+
+```tsx
+// chain
+[
+  { id: "x1", counter: 44, signature: "abc" },
+  { id: "x2", counter: 2, signature: "cde" },
+];
+```
+
+### Example
+
+#### Members
+
+```tsx
+const chain = [
+  {
+    id: "c1",
+    counter: 0,
+    member: "m0",
+  },
+];
+const members = [{ id: "m0", chainId: "c1", chainCounter: 0, name: "John" }];
+// client B retrieves chain and members
+// client A adds a member
+const chain = [
+  {
+    id: "c0",
+    counter: 0,
+    member: "m0",
+  },
+  {
+    id: "c1",
+    counter: 0,
+    member: "m1",
+  },
+];
+const members = [
+  { id: "m0", chainId: "c1", chainCounter: 0, name: "John" },
+  { id: "m1", chainId: "c2", chainCounter: 0, name: "Anna" },
+];
+
+// client B requests an update with params: c0 and 0
+// server returns chain entry c1 and member m1
+
+// client A updates the m0 name
+const members = [
+  { id: "m0", chainId: "c2", chainCounter: 1, name: "Johnathon" },
+  { id: "m1", chainId: "c2", chainCounter: 0, name: "Anna" },
+];
+
+// client B requests an update with params: c0 and 0
+// server returns member m0
+```

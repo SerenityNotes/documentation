@@ -4,5 +4,6 @@
   "workspace": "Workspace",
   "page": "Page",
   "threat_model": "Threat Model",
+  "data_sync": "Data Synchronisation",
   "miscellaneous": "Miscellaneous"
 }
