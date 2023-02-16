@@ -1,0 +1,31 @@
+# Comments
+
+## Keys
+
+And everytime a new Snapshot is taking we clean out old comment Ids and then they are not accessible anymore to new users or page share links.
+
+Still for every comment we have a trace so admins can still see the history.
+
+Still to be determined what clean out old comments mean. Most probably every comment that is not referenced in the current document.
+
+## Test flows
+
+### Test Flow 1
+
+- Create a workspace and invite a user B
+- Create a document (snapshot key A)
+- Create a sharelink X
+- Remove user B from the workspace
+- Make an update to document (snapshot key B)
+  - Add a lockbox for sharelink X
+- Sharelink X should be valid
+
+### Test Flow 2
+
+- Create a workspace and invite a user B
+- Create a document (snapshot key A)
+- Create a comment
+- Remove user B from the workspace
+- Make an update to document (snapshot key B)
+- Create a sharelink X
+  - Add a lockbox for sharelink X to snapshotKey B
