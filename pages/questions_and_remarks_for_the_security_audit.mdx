@@ -13,6 +13,13 @@ Repositories:
 
 - Are there any HTTP security feautes we should activate? (e.g. HSTS)
 
+## AEAD Encryption
+
+- Is Known-plaintext attack an issue for us? We use a XChaCha20-Poly1305 construction
+  - We are creating an empty snapshot whenever we create a document. Could this reveal the key?
+  - The updates are very small when syncing in real time (often only one character). Is this too deterministic and could this reveal the key?
+    If so should we add a random factor to every update or how to best resolve this?
+
 ## Websocket Connections
 
 - Is the `sessionKey` authentication as a query parameter secure enough or what are proposed alternatives?
