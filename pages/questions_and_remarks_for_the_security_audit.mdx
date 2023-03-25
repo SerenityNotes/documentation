@@ -5,6 +5,20 @@ Repositories:
 - https://github.com/SerenityNotes/react-native-libsodium
 - https://github.com/SerenityNotes/serenity
 
+## Device
+
+Currently we create two keypairs for each device:
+
+- signing key pair
+- encryption key pair
+
+Then we sign the public encryption key with the signing key. This has to be verified every time a client receives a device.
+
+Would it be better to create a single signing keypair and use the functionality to convert a ED25519 keypair to a X25519 keypair?
+
+Upside would be clear conversion and less signature verification
+What is the downside? Only one I can think of is eventuall switching to a different encryption scheme and then it might be a bigger change.
+
 ## React-Native-Libsodium
 
 - Is the `memcpy` appraoch fine?
