@@ -25,7 +25,14 @@ TODO
 
 ## Invitation flow
 
-TODO
+1. Alice creates the invitation and adds it to the chain
+2. Alice send the private key to Bob
+3. Bob can sign with the private key the
+
+   - invitation data (so nothing can be forged)
+   - main device info
+
+4. Alice or Charlie (member then can add a chain entry to add Bob as a member) - they must add the signature created by Bob as proof, they also must check that the expiration date is not passed
 
 ## Revocation
 
