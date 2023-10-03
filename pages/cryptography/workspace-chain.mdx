@@ -1,0 +1,269 @@
+# Workspace-Chain
+
+Each workspace has a workspace-chain to determine the membership and role of a user. The chain is supposed to immutable. Items can't be reordered and no forks are allowed. In case a fork is dedected the chain is considered invalid.
+
+The chain is a series of events where each event contains a
+
+- transaction
+- hash of the previews transaction (except for the first event)
+- list of authors containing
+  - publicKey
+  - signature of the combined transaction hash and the previous transaction hash
+
+https://github.com/serenity-kit/Serenity/tree/main/packages/workspace-chain
+
+Based on the workspace-chain a current state of the members can be derived.
+
+## Cryptographic Dependencies and actual implementation
+
+- generate_id: `sodium.to_base64(sodium.randombytes_buf(24))`
+- hash: `sodium.to_base64(sodium.crypto_generichash(64, message))`
+- canonicalize: predictable canocalization of JSON as defined by RFC8785 https://www.npmjs.com/package/canonicalize
+- signSeedKeypair: `sodium.crypto_sign_seed_keypair(seed)`
+- sign: `sodium.crypto_sign_detached(message, privateKey)`
+- signVerify: `sodium.crypto_sign_detached(signature, message, publicKey)`
+
+## Available Transaction Types
+
+- createChain
+- addMember
+- updateMember
+- removeMember
+- addInvitation
+- acceptInvitation
+- removeInvitation
+
+## Overview of state after a chain has been processed
+
+- id
+- invitations
+- members
+- lastEventHash
+- encryptedStateClock // unused at the moment
+- workspaceChainVersion // for protocol versioning
+
+## Creating any chain event
+
+```ts
+transaction = hash(canonicalize(transaction));
+// previousTransactionHash is null for the createChain event
+message = canonicalize(transactionHash + previousTransactionHash);
+signature = sign(message, privateKey);
+```
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/createChain.ts#L18-L35
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/addMember.ts#L22-L36
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/removeMember.ts#L19-L34
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/removeMember.ts#L19-L34
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/addInvitation.ts#L68-L83
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/acceptInvitation.ts#L93-L107
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/removeInvitations.ts#L25-L40
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/updateMember.ts#L22-L36
+
+## Cryptographic validation for createChain event
+
+```ts
+transactionHash = hash(canonicalize(transaction));
+message = canonicalize(transactionHash + null);
+// for each author
+signVerify(author.signature, message, author.publicKey);
+```
+
+This allows to validate:
+
+- the transaction is authenticated by all authors
+- the transaction is not modified
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/utils.ts#L15-L36
+
+## Cryptographic validation for all chain events (except createChain)
+
+```ts
+transactionHash = canonicalize(transaction);
+message = canonicalize(transactionHash + previousTransactionHash);
+// for each author
+signVerify(author.signature, message, author.publicKey);
+```
+
+This allows to validate:
+
+- the transaction is authenticated by all authors
+- the transaction is not modified
+- the previousTransactionHash is authenticated by all authors
+- the previousTransactionHash is not modified
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/applyEvent.ts#L22-L43
+
+## Transaction Types and Validations
+
+### Create Chain
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/createChain.ts
+
+```ts
+transaction = {
+  type: "create",
+  id: generateId(),
+};
+```
+
+The `id` is to identify the workspace by ID.
+
+Validations:
+
+- must be a single author
+
+### Add member
+
+Adds a member based on the provided `memberMainDeviceSigningPublicKey` & `memberRole`.
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/addMember.ts
+
+Validations:
+
+- all authors must be members with the role `ADMIN`
+- the member must not exist in state constructured from the existing chain
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/applyEvent.ts#L156-L171
+
+### Remove Member
+
+Removes a member based on the provided `memberMainDeviceSigningPublicKey`
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/removeMember.ts
+
+Validations:
+
+- all authors must be members with the role `ADMIN`
+- the member must exist in state constructured from the existing chain
+- not allowed to remove the last admin
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/applyEvent.ts#L212-L240
+
+### Update Member
+
+Updates a member role based on the provided `memberMainDeviceSigningPublicKey` & `memberRole`.
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/updateMember.ts
+
+Validations:
+
+- all authors must be members with the role `ADMIN`
+- the member must exist in state constructured from the existing chain
+- not allowed to demote the last admin
+- the role must be different than the current one
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/applyEvent.ts#L173-L210
+
+### Add invitation
+
+A user can invite another user to a workspace. The invitation is stored in the chain as an invitation event. The purpose is to create an invitation link with the seed in the hash that can be sent out via a secure out of band channel e.g. a secure messenger. The user can sign in or sign up and then accept the invitation adding themselves as a member to the workspace.
+
+The invitation transaction contains the following information:
+
+- invitationId
+- role
+- expiresAt // can only be verified by the server, but also helps admins to clean out old invitations
+- invitationSigningPublicKey
+- invitationDataSignature
+- workspaceId
+
+```ts
+invitationSigningKeys = signSeedKeypair(seed); // sodium.randombytes_buf(sodium.crypto_sign_SEEDBYTES)
+invitationId = generateId();
+invitationData = canonicalize({
+  workspaceId,
+  invitationId,
+  invitationSigningPublicKey,
+  role,
+  expiresAt,
+});
+invitationDataSignature = sign(
+  invitationData,
+  invitationSigningKeys.privateKey
+);
+
+transaction = {
+  type: "add-invitation",
+  invitationId,
+  role,
+  expiresAt
+  invitationSigningPublicKey,
+  invitationDataSignature
+  workspaceId,
+}
+```
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/addInvitation.ts
+
+Validations:
+
+- all authors must be members with the role `ADMIN`
+- the invitation ID must exist in state constructured from the existing chain
+- the invitationDataSignature must be valid `signVerify(invitationDataSignature, invitationData, invitationSigningPublicKey)`
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/applyEvent.ts#L117-L154
+
+### Accept invitation
+
+With the seed a user can accept an invitation and add themselves to the workspace members.
+
+```ts
+invitationSigningKeyPair = signSeedKeypair(seed);
+invitationData = canonicalize({
+  workspaceId,
+  invitationId,
+  invitationSigningPublicKey,
+  role,
+  expiresAt,
+});
+signVerify(invitationDataSignature, invitationData, invitationSigningPublicKey); // first verify the invitationDataSignature
+
+acceptInvitationData = canonicalize({
+  workspaceId,
+  invitationId,
+  invitationSigningPublicKey,
+  role,
+  expiresAt,
+});
+acceptInvitationSignature = sign(
+  acceptInvitationData,
+  invitationSigningKeyPair.privateKey
+);
+```
+
+The `acceptInvitationSignature` proofs that the user has access to the seed of a currently valid invitation.
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/acceptInvitation.ts
+
+Validations:
+
+- accept-invitation event can only be signed by one author
+- the invitation ID must exist in state constructured from the existing chain and it's invitationSigningPublicKey and role must match the ones in the accept-invitation event
+- author is not a member of the workspace yet
+- acceptInvitationSignature must be valid `signVerify(acceptInvitationSignature, acceptInvitationData, invitationSigningPublicKey)`
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/applyEvent.ts#L60-L115
+
+### Remove Invitations
+
+Removes invitations based on the provided `invitationIds`
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/removeInvitations.ts
+
+Validations:
+
+- all authors must be members with the role `ADMIN`
+- the invitations must exist in state constructured from the existing chain
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/applyEvent.ts#L242-L256
+
+## Versioning
+
+Each transaction includes a version of the protocol. Once the version has been increased by one transaction it can't go lower anymore. This means every client must have the same or a higher version than the last transaction in the chain otherwise the chain is considered invalid.
+
+NOTE: This check is not yet implemented (only in the user-chain)
+
+## Miscellaneous
+
+All types are documented here: https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/types.ts
