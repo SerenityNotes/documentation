@@ -2,31 +2,15 @@
 
 Each page is a Yjs document containing a Prosemirror document.
 
-### Naisho
+### Secsync
 
 TODO
 
 ### Attachment
 
-Each document can have one or mutliple attachments. An attachment is a file that is separately encrypted and storred on a blob storage (Cloudflare R2). The key to decrypt the file is only storred in the document.
-
-TODO
-
-- add encryption info
-- add code references
-- explain copy & paste security
-
-### Note about copy & pasting
-
-Usually when copying an image inside the editor the image is serialized to an `img` tag with various attributes. In our case this would include the actual `key` to decrypt the image. Since this would be a potential security risk the key is only stored in memory referenced by a `fileId` and not serialized to the `img` tag. The `fileId` is then serialized to the `img` tag. When pasting the image the `fileId` is used to retrieve the key from memory and store the `key` in the document.
-
-TODO add code reference
+Each document can have one or mutliple attachments. An attachment is a file that is separately encrypted and storred on a blob storage.
 
 ## Comments
-
-**Note:** Comments are not yet implemented.
-
-TODO
 
 ## Sharing a single Page
 

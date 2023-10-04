@@ -1,0 +1,49 @@
+# Document Attachments
+
+Each document can have one or mutliple attachments. An attachment is a file that is separately encrypted and storred on a blob storage (Cloudflare R2). The key to decrypt the file is only storred in the document.
+
+Handling attachments separately was done for three reasons:
+
+- Avoid attachment downloads blocking the reconstruction of the document
+- Allow attachments to be downloaded on demand (not implemented yet as attachments will download automatically)
+- Snapshots could become very large with multiple attachments in a document. Encrypting and submitting them could take a long time.
+
+The downside of this approach is that once the key to attachment is known the user could download the attachment later on and decrypt it. This only can be solved with re-encryption of the attachment with a new key and deleting the old attachment.
+
+Instead here the clients rely on the server to prevent access.
+
+https://github.com/serenity-kit/Serenity/tree/ccb7b6e3d75c63f87e83b0644d97bfc13668f6d5/apps/app/utils/file
+
+## Cryptographic Dependencies and actual implementation
+
+- generate_id: `sodium.to_base64(sodium.randombytes_buf(24))`
+- encryptAead: `sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(message, additionalData, nonce, key)`
+- decryptAead: `sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(ciphertext, additionalData, nonce, key)`
+
+Note: For `encryptAead` every message is prefixed with a block of four 0-bytes to ensure commitment. [More info here](https://github.com/serenity-kit/secsync/blob/main/packages/secsync/src/crypto/encryptAead.ts#L16-L20)
+
+## Encrypt and uploaded
+
+`encryptAndUploadFile` is invoked here https://github.com/serenity-kit/Serenity/blob/main/packages/editor-file-extension/src/uploadFileProsemirrorPlugin.ts
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/file/createEncryptAndUploadFileFunction.ts
+
+Once the encrypted blob exists the client will request a signed URL from the server to directly upload the blob to R2.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/graphql/mutations/file/initiateFileUpload.ts (Server GraphQL Mutation)
+https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/file/initiateFileUpload.ts (Server)
+
+## Download and decrypt
+
+In order to download an attachment a client needs to be authenticated and have access to the document. The server will create a signed R2 URL that is only valid for a short period of time. The client will then use this URL to download the attachment.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/file/createDownloadAndDecryptFileFunction.ts (Client)
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/graphql/queries/file/fileUrl.ts (Server GraphQL Query)
+https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/file/getFileUrl.ts (Server)
+
+## Note about copy & pasting
+
+Usually when copying an image inside the editor the image is serialized to an `img` tag with various attributes. In our case this would include the actual `key` to decrypt the image. Since this would be a potential security risk the key is only stored in memory referenced by a `fileId` and not serialized to the `img` tag. The `fileId` is then serialized to the `img` tag. When pasting the image the `fileId` is used to retrieve the key from memory and store the `key` in the document.
+
+Code can be found in this editor extension: https://github.com/serenity-kit/Serenity/tree/main/packages/editor-file-extension
