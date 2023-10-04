@@ -45,7 +45,7 @@ Based on the workspace-chain a current state of the members can be derived.
 ## Creating any chain event
 
 ```ts
-transaction = hash(canonicalize(transaction));
+transactionHash = hash(canonicalize(transaction));
 // previousTransactionHash is null for the createChain event
 message = canonicalize(transactionHash + previousTransactionHash);
 signature = sign(message, privateKey);

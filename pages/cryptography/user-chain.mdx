@@ -1,0 +1,144 @@
+# User-Chain
+
+Each user has a user-chain to determine to verify the ownership of devices. The chain is supposed to immutable. Items can't be reordered and no forks are allowed. In case a fork is dedected the chain is considered invalid.
+
+The chain is a series of events where each event contains a
+
+- transaction
+  - type
+  - version
+  - previous event hash
+  - … custom props depending on the type
+- author
+  - publicKey
+  - signature of the combined transaction hash and the previous transaction hash
+
+https://github.com/serenity-kit/Serenity/tree/main/packages/user-chain
+
+Based on the user-chain a current state of a user including all theirs devices can be derived.
+
+## Cryptographic Dependencies and actual implementation
+
+- generate_id: `sodium.to_base64(sodium.randombytes_buf(24))`
+- hash: `sodium.to_base64(sodium.crypto_generichash(64, message))`
+- canonicalize: predictable canocalization of JSON as defined by RFC8785 https://www.npmjs.com/package/canonicalize
+- sign: `sodium.crypto_sign_detached(message, privateKey)`
+- signVerify: `sodium.crypto_sign_detached(signature, message, publicKey)`
+
+## Available Transaction Types
+
+- createChain
+- addDevice
+- removeDevice
+
+## Device structure
+
+- signingPublicKey
+- encryptionPublicKey
+- encryptionPublicKeySignature
+
+## Overview of state after a chain has been processed
+
+- id
+- email
+- mainDeviceSigningPublicKey
+- mainDeviceEncryptionPublicKey
+- mainDeviceEncryptionPublicKeySignature
+- devices
+- removedDevices
+- eventHash
+- eventVersion // for protocol versioning
+
+## Creating any chain event
+
+```ts
+transaction = {
+  prevEventHash, // is null for the createChain event
+  …
+}
+transactionHash = hash(canonicalize(transaction));
+signature = sign(transactionHash, privateKey);
+```
+
+## Cryptographic validation for all chain events
+
+```ts
+transactionHash = hash(canonicalize(transaction));
+signVerify(author.signature, transactionHash, author.publicKey);
+```
+
+This allows to validate:
+
+- the transaction is authenticated by the author
+- the transaction is not modified
+
+For the createChain event the prevEventHash is null. For all other events it must be defined. Once provided it results in the following properties:
+
+- the previousEventHash is authenticated by the author
+- the previousEventHash is not modified
+
+## Transaction Types and Validations
+
+### Create chain
+
+```ts
+transaction = {
+  type: "create",
+  id: generateId(),
+  encryptionPublicKey,
+  encryptionPublicKeySignature,
+  prevEventHash: null,
+  email,
+  version,
+};
+```
+
+The `id` is to identify the user by ID.
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/createChain.ts
+
+Validations:
+
+- has a signingPublicKey, encryptionPublicKey and valid encryptionPublicKeySignature for the main device `signVerify(encryptionPublicKeySignature, encryptionPublicKey, signingPublicKey)`
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/applyCreateChainEvent.ts
+
+### Add Device
+
+Adds a device to the user. `signingPublicKey` & `encryptionPublicKey` are required parameters, while `expiresAt` is optional. The idea behind expiresAt is that you can add short lived devices and each client, but also the server can check that expired devices are not included in e.g. workspace key rotations.
+
+In order to prevent drifts between clients the device session for example expires earlier than the expiredAt.
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/addDevice.ts
+
+Validations:
+
+- the device does not exist in the state derived until the event
+- has a signingPublicKey, encryptionPublicKey and valid encryptionPublicKeySignature `signVerify(encryptionPublicKeySignature, encryptionPublicKey, signingPublicKey)`
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/applyEvent.ts#L53-L69
+
+### Remove Device
+
+Removes a device based on the provided `signingPublicKey`
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/removeDevice.ts
+
+Validations:
+
+- the device does exist in the state derived until the event
+- it's not the main device that is being removed
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/applyEvent.ts#L71-L90
+
+## Versioning
+
+Each transaction includes a version of the protocol. Once the version has been increased by one transaction it can't go lower anymore. This means every client must have the same or a higher version than the last transaction in the chain otherwise the chain is considered invalid.
+
+It also fails in case the version is higher than the currently known to prevent the chain being processed by an older client.
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/applyEvent.ts#L34-L45
+
+## Miscellaneous
+
+All types are documented here: https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/types.ts
