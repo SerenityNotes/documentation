@@ -17,6 +17,8 @@ https://github.com/serenity-kit/Serenity/tree/ccb7b6e3d75c63f87e83b0644d97bfc136
 ## Cryptographic Dependencies and actual implementation
 
 - generate_id: `sodium.to_base64(sodium.randombytes_buf(24))`
+- generateKey: `sodium.crypto_aead_xchacha20poly1305_ietf_keygen()`
+- generateNonce: `sodium.randombytes_buf(sodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES)`
 - encryptAead: `sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(message, additionalData, nonce, key)`
 - decryptAead: `sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(ciphertext, additionalData, nonce, key)`
 
@@ -28,6 +30,14 @@ Note: For `encryptAead` every message is prefixed with a block of four 0-bytes t
 
 https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/file/createEncryptAndUploadFileFunction.ts
 
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/file/encryptFile.ts
+
+```ts
+key = generateKey();
+nonce = generateNonce();
+ciphertext = encryptAead(fileContent, "", nonce, key);
+```
+
 Once the encrypted blob exists the client will request a signed URL from the server to directly upload the blob to R2.
 
 https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/graphql/mutations/file/initiateFileUpload.ts (Server GraphQL Mutation)
@@ -36,6 +46,10 @@ https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/fil
 ## Download and decrypt
 
 In order to download an attachment a client needs to be authenticated and have access to the document. The server will create a signed R2 URL that is only valid for a short period of time. The client will then use this URL to download the attachment.
+
+```ts
+fileContent = decryptAead(ciphertext, "", nonce, key);
+```
 
 https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/file/createDownloadAndDecryptFileFunction.ts (Client)
 

@@ -1,7 +1,9 @@
 {
+  "introduction": "Introduction",
   "user-chain": "User Chain (Devices)",
   "workspace-chain": "Workspace Chain (Membership & Roles)",
   "workspace-encryption": "Workspace Key (Encryption)",
+  "folder-encryption": "Folder Key Derivation (Encryption)",
   "document-chain": "Document Chain (Share Links)",
   "document-encryption": "Document Chain (Share Links)",
   "document-attachments": "Document Attachments",

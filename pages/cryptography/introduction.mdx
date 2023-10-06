@@ -1,0 +1,67 @@
+# Introduction
+
+## Definitions
+
+User: Is an entity representing a person who can use the system.
+
+Client: Is an instance of the software that is used by a user to interact with the system.
+
+Server: Is a centralized service that is responsible for storing and exchanging data between client.
+
+## Security Model
+
+The main objective of the whole project is to create a system where the server can never access the content or name of a folder or document. The assumes that the code the client is executing is not compromised.
+
+The server has a lot of meta-data. The aim is to minimize the amount of meta-data in the future, but ideally keep all the verifications in place using zero-knowledge proofs.
+
+Clients must trust other verified clients with the encryption. A malicious client can leak data or in worst case create malicious data that could prevent other clients from decrypting the content.
+
+What can't be prevented is that the server will hide data from a user. A server could even fork a workspace, but once that happens the participansts of each for can't work together anymore since the chain verifications would dedect the fork.
+
+## Client Responsibilities
+
+- Authenticate changes to chains & encryptions before presenting data to the user
+- Inform the user on malicious activity and set the respective document or workspace to read-only
+
+## Server Responsibilities
+
+- Register new users
+- Authenticate users
+- Authorization when accessing data
+- Authorization and validation before writing it to the database
+  - This excludes validation of encrypted data since the server should never be able to decrypt data belonging to a user.
+  - Validation means
+    - Verifying signatures
+    - Ensuring that all signature chains (user, workspace and document) are in the correct order and no forks are created.
+
+## Key Separation
+
+Two symmetric enryption keys are encrypted using asymmetric encryption (secret_box). Specifically:
+
+- Workspace key
+- Share document device Key (used for sharing documents via a link)
+
+In order to make sure these keys are not mistaken with each other they are prefixed with a context byte (0x01 for workspace and 0x02 for share document).
+
+TODO Note this is not implemented yet everywhere
+
+## Signature Context
+
+In order to prevent signatures being misused in the wrong context each message is prefixed with a context string. Here is the full list:
+
+This needs to be still implemented in the places where it's missing:
+
+- Workspace chain entry: TODO
+- User chain entry: TODO
+- Document chain entry: TODO
+- Device encryptionPublicKey: `device_encryption_public_key`
+- Share document device encryptionPublicKey: TODO
+- sessionTokenSignature: TODO
+- Folder ID signature: TODO
+
+## Code separation
+
+There is a clear separation between the server and client code to ensure a compromised server can't trick a client in breaking the security model.
+
+- Server code is deployed on fly.io
+- Client code is a static build and deployed on Netlify

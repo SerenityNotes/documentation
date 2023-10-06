@@ -1,0 +1,58 @@
+# Folder Encryption
+
+Folders are encrypted with a folder key derived from a workspace key. Only the folder name is encrypted. All sub-folders and files are encrypted with their own keys derived from the folder key.
+
+## Cryptographic Dependencies and actual implementation
+
+- randomInt: `sodium.randombytes_uniform(2 ** 31 - 1)` // in JS a larger upper bound doesn't seem possible, see https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/kdfDeriveFromKey/kdfDeriveFromKey.ts#L16
+- kdf: `sodium.crypto_kdf_derive_from_key(crypto_aead_xchacha20poly1305_ietf_KEYBYTES, subkeyId, context, key)`
+- generateNonce: `sodium.randombytes_buf(sodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES)`
+- encryptAead: `sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(message, additionalData, nonce, key)`
+- decryptAead: `sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(ciphertext, additionalData, nonce, key)`
+
+Note: For `encryptAead` every message is prefixed with a block of four 0-bytes to ensure commitment. [More info here](https://github.com/serenity-kit/secsync/blob/main/packages/secsync/src/crypto/encryptAead.ts#L16-L20)
+
+## Creating a folder
+
+At first only the key derivation trace is created. The key derivation trace is used to derive the folder key and all sub-folder keys. While each folder could be directly derived from a workspaceKey this design was chosen to later on support sharing entire folders. Once a folderKey is known all sub-folders and documents inside can be decrypted knowing the subkeyIds used to derive the sub-keys.
+
+This means only root folders are directly derived from the workspace key. All sub-folders are derived from their parent folder key.
+
+Building a key derivation trace is done here:
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/sidebar/Sidebar.tsx#L64-L102
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/folder/createFolderKeyDerivationTrace.ts#L12
+
+## Deriving a folder key
+
+```ts
+subkeyId = randomInt();
+folderKey = kdf(subkeyId, "folder__", parentKey); // parentKey is the workspaceKey for root folders or the parent folder key for sub-folders
+```
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/deriveKeysFromKeyDerivationTrace/deriveKeysFromKeyDerivationTrace.ts
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/kdfDeriveFromKey/kdfDeriveFromKey.ts
+
+## Encrypting the folder name
+
+```ts
+subkeyId = randomInt();
+folderKey = kdf(subkeyId, "folder__", parentKey); // parentKey is the workspaceKey for root folders or the parent folder key for sub-folders
+nonce = generateNonce();
+ciphertext = encryptAead(folderName, {}, nonce, folderKey);
+```
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/encryptFolderName/encryptFolderName.ts
+
+## Decrypting a folder name
+
+```ts
+folderKey = kdf(subkeyId, "folder__", parentKey); // parentKey is the workspaceKey for root folders or the parent folder key for
+folderName = decryptAead(ciphertext, {}, nonce, folderKey);
+```
+
+## Open Questions
+
+- The AD when encrypting/decrypting a folder name should probably include the workspaceId and the folderId to bind the result to a specific workspace and folder.

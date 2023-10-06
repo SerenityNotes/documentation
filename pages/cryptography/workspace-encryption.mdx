@@ -1,1 +1,128 @@
 # Workspace Key
+
+Each workspace has one currently active workspace key and can have multiple previous workspace keys.
+
+All keys (except document attachment keys) to encrypt data are derived from the currently active workspace key using key derivation. Currently these are keys to encrypt:
+
+- folder names
+- document names
+- document content & cursor information (Secsync snapshots, updates and ephemeral messages)
+- document comments
+
+In the future this will include the workspace name and other workspace metadata.
+
+## Goals of this Design
+
+- Prevent removed members from decrypting data that was encrypted after they left the workspace
+- Reduce the number of necessary encryption boxes. Currently one encryption box is used for each user per workspaceKey and all the other keys (except document attachments) can be derived.
+- Avoid re-encrypting all data when a member is removed from a workspace. It's the servers responsibility to also block removed members from accessing the workspace, but this can't be guaranteed.
+
+## Cryptographic Dependencies and actual implementation
+
+- generate_id: `sodium.to_base64(sodium.randombytes_buf(24))`
+- keygen: `sodium.crypto_kdf_keygen()`
+- noncegen: `sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES)` // TODO this should not be crypto_secretbox_NONCEBYTES, but rather crypto_box_NONCEBYTES - which are probably the same
+- asymmetric_encrypt: `sodium.crypto_box_easy(message, nonce, recipientPublicKey, senderPrivateKey)`
+- asymmetric_decrypt: `sodium.crypto_box_open_easy(ciphertext, nonce, senderPublicKey, recipientPrivateKey)`
+
+## Initially generating a workspace key and the corresponding encryption boxes
+
+When a workspace is created, a new workspace key is generated and encrypted for each device of each member of the workspace.
+
+```ts
+workspaceKeyId = generate_id();
+workspaceKey = keygen();
+// for each active device of each user (determined by the workspace chain)
+nonce = noncegen();
+boxCiphertext = asymmetric_encrypt(
+  workspaceKey,
+  nonce,
+  receiverDeviceEncryptionPublicKey,
+  senderDeviceEncryptionPrivateKey
+);
+```
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/device/createWorkspaceKeyBoxesForDevices.ts
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/encryptWorkspaceKeyForDevice/encryptWorkspaceKeyForDevice.ts
+
+The workspace key is stored in the backend and set as the active workspace key.
+
+## Decrypting a workspace key
+
+When a user logs in, all workspace keys are retrieved and decrypted for the active device.
+
+```ts
+workspaceKey = asymmetric_decrypt(
+  workspaceKey,
+  nonce,
+  senderDeviceEncryptionPublicKey,
+  receiverDeviceEncryptionPrivateKey
+);
+```
+
+Workspace keys are fetched on demand e.g. in the Sidebar:
+
+- https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/sidebar/Sidebar.tsx
+- https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/document/documentPathStore.ts (used in PageHeaderLeft, Sidebarfolder & PageScreen)
+
+and then calls
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/workspace/retrieveWorkspaceKey.ts or https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/workspace/retrieveCurrentWorkspaceKey.ts
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/decryptWorkspaceKey/decryptWorkspaceKey.ts
+
+Workspace keys are fetched on demand e.g. in the Sidebar:
+
+## Adding a new device to the workspace and creating the corresponding encryption box on a login
+
+When a new device is added during login, the mainDevice is available. All boxes for all workspaceKeys are retrieved and decrypted. Then a new box is created for each workspaceKey and encrypted for the new device.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/login/LoginForm.tsx#L90-L92
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/workspace/attachDeviceToWorkspaces.ts
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/device/createNewWorkspaceKeyBoxesForActiveDevice.ts
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/encryptWorkspaceKeyForDevice/encryptWorkspaceKeyForDevice.ts
+
+## Adding a new user to the workspace and creating the corresponding encryption boxes
+
+When a new user is added to the workspace, each workspace key is encrypted for each device of the new user.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/workspace/authorizeMembersIfNecessary.ts
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/encryptWorkspaceKeyForDevice/encryptWorkspaceKeyForDevice.ts
+
+## Rotation a workspace key when removing a member
+
+When a member is removed from a workspace, a new workspace key is generated and encrypted for each device of each member of the workspace.
+
+This action can only be done by an admin of the workspace (as defined in the workpace-chain state).
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/workspaceSettingsMembersScreen/WorkspaceSettingsMembersScreen.tsx#L143-L147
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/workspace/rotateWorkspaceKey.ts
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/encryptWorkspaceKeyForDevice/encryptWorkspaceKeyForDevice.ts
+
+## Rotating a workspace key when removing a device
+
+When a device is removed by a user from their device list in the UI, a new workspace key is generated and encrypted for each device of each member of the workspace. This is done for every workspace of the user.
+
+NOTE: This interaction is problematic since any user can rotate a workspace key (currently also with the role VIEWER or COMMENTER). The benefit is that everyone can force any new encryption to be done with a new workspace key. The downside is that this can be used to create an error state for specific users or even specific devices of a user by creating broken encrypted workspace keys boxes.
+
+TODO two options?
+
+- limited to Admins of the workspace only. Any other user should make a request to an admin to rotate the workspace key and admins query for them and add users
+- some form of error handling informing the user of a broken state and requesting to invalidate this workspace key?
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/accountDevicesSettingsScreen/AccountDevicesSettingsScreen.tsx#L107-L120
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/workspace/rotateWorkspaceKey.ts
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/encryptWorkspaceKeyForDevice/encryptWorkspaceKeyForDevice.ts
+
+## Open Questions
+
+- Must the workspaceKey and workspaceKeyId cryptographically e.g. signing bound to the workspace and the workspace chain with a reference to the event hash? If not could someone replace a workspace key and abuse that to decrypt data with an attack?
