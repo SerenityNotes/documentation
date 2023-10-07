@@ -35,6 +35,42 @@ https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/deriveKey
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/kdfDeriveFromKey/kdfDeriveFromKey.ts
 
+### Folder Key Trace Structure
+
+Root folder example
+
+```ts
+{
+  workspaceKeyId: "5Q5_3zwQ9ZOkykoLvVNHtmz48_4Fxfvq";
+  trace: [{
+    entryId: "EWJjmGc7ErIDLQfaFBzqJJDXqLxutq6J";
+    subkeyId: 42;
+    parentId: null;
+    context: "folder__";
+  }];
+}
+```
+
+Subfolder:
+
+```ts
+{
+  workspaceKeyId: "5Q5_3zwQ9ZOkykoLvVNHtmz48_4Fxfvq";
+  trace: [{
+    entryId: "EWJjmGc7ErIDLQfaFBzqJJDXqLxutq6J";
+    subkeyId: 42;
+    parentId: null;
+    context: "folder__";
+  },
+  {
+    entryId: "lY5fksq266Y9lDPxsnpHxX6toMpQ5pM7";
+    subkeyId: 856;
+    parentId: "EWJjmGc7ErIDLQfaFBzqJJDXqLxutq6J";
+    context: "folder__";
+  }];
+}
+```
+
 ## Encrypting the folder name
 
 ```ts

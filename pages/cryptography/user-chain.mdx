@@ -1,6 +1,6 @@
 # User-Chain
 
-Each user has a user-chain to determine to verify the ownership of devices. The chain is supposed to immutable. Items can't be reordered and no forks are allowed. In case a fork is dedected the chain is considered invalid.
+Each user has a user-chain to determine the ownership of devices. The chain is supposed to be immutable. Items can't be reordered and no forks are allowed. In case a fork is dedected the chain is considered invalid.
 
 The chain is a series of events where each event contains a
 
@@ -13,7 +13,7 @@ The chain is a series of events where each event contains a
   - publicKey
   - signature of the combined transaction hash and the previous transaction hash
 
-https://github.com/serenity-kit/Serenity/tree/main/packages/user-chain
+https://github.com/serenity-kit/Serenity/tree/main/packages/user-chain/src
 
 Based on the user-chain a current state of a user including all theirs devices can be derived.
 
@@ -27,7 +27,7 @@ Based on the user-chain a current state of a user including all theirs devices c
 
 ## Available Transaction Types
 
-- createChain
+- createUserChain
 - addDevice
 - removeDevice
 
@@ -35,7 +35,7 @@ Based on the user-chain a current state of a user including all theirs devices c
 
 - signingPublicKey
 - encryptionPublicKey
-- encryptionPublicKeySignature
+- encryptionPublicKeySignature (context prefix: `user_device_encryption_public_key`)
 
 ## Overview of state after a chain has been processed
 
@@ -95,13 +95,13 @@ transaction = {
 
 The `id` is to identify the user by ID.
 
-https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/createChain.ts
+https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/createUserChain.ts
 
 Validations:
 
 - has a signingPublicKey, encryptionPublicKey and valid encryptionPublicKeySignature for the main device `signVerify(encryptionPublicKeySignature, encryptionPublicKey, signingPublicKey)`
 
-https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/applyCreateChainEvent.ts
+https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/applyCreateUserChainEvent.ts
 
 ### Add Device
 

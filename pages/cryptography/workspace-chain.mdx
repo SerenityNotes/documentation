@@ -1,6 +1,6 @@
 # Workspace-Chain
 
-Each workspace has a workspace-chain to determine the membership and role of a user. The chain is supposed to immutable. Items can't be reordered and no forks are allowed. In case a fork is dedected the chain is considered invalid.
+Each workspace has a workspace-chain to determine the membership and role of a user. The chain is supposed to be immutable. Items can't be reordered and no forks are allowed. In case a fork is dedected the chain is considered invalid.
 
 The chain is a series of events where each event contains a
 
@@ -10,7 +10,7 @@ The chain is a series of events where each event contains a
   - publicKey
   - signature of the combined transaction hash and the previous transaction hash
 
-https://github.com/serenity-kit/Serenity/tree/main/packages/workspace-chain
+https://github.com/serenity-kit/Serenity/tree/main/packages/workspace-chain/src
 
 Based on the workspace-chain a current state of the members can be derived.
 

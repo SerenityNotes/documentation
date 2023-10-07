@@ -1,21 +1,140 @@
 # Document Chain
 
-// create a chain
-// id
+Each document has a document-chain to determine which share devices have been created. A share device is a device that is provided to an external user to interact only with this specific document. These entries can be revoked manually, but also expire based on the expiredAt property. In addition a role must be defined to determine the permissions of the share device. The role can be one of the following:
 
-// add-share-device
-// runs createDocumentShareLink
-// returns virtualDeviceKey
-// stores in the chain the
-// - signingPublicKey
-// - encryptionPublicKey
-// - encryptionPublicKeySignature
-// - expiresAt
-// - role
-// can only be done by someone with editor role in the workspace
+- viewer
+- commenter
+- editor
 
-// remove-share-device
-// removes it from the chain
+Only a workspace owner or editor can create a share device.
 
-// each chain state must reference the workspace chain event to define the members
-// TODO how to define the devices
+The chain is supposed to be immutable. Items can't be reordered and no forks are allowed. In case a fork is dedected the chain is considered invalid.
+
+The chain is a series of events where each event contains a
+
+- transaction
+  - type
+  - version
+  - previous event hash
+  - … custom props depending on the type
+- author
+  - publicKey
+  - signature of the combined transaction hash and the previous transaction hash
+
+https://github.com/serenity-kit/Serenity/tree/main/packages/document-chain/src
+
+Based on the document-chain a current state of the active share devices can be determined for each event.
+
+## Cryptographic Dependencies and actual implementation
+
+- generate_id: `sodium.to_base64(sodium.randombytes_buf(24))`
+- hash: `sodium.to_base64(sodium.crypto_generichash(64, message))`
+- canonicalize: predictable canocalization of JSON as defined by RFC8785 https://www.npmjs.com/package/canonicalize
+- sign: `sodium.crypto_sign_detached(message, privateKey)`
+- signVerify: `sodium.crypto_sign_detached(signature, message, publicKey)`
+
+## Available Transaction Types
+
+- createDocumentChain
+- addDocumentShareDevice
+- removeDocumentShareDevice
+
+## Device structure
+
+- signingPublicKey
+- encryptionPublicKey
+- encryptionPublicKeySignature (context prefix: `share_document_device_encryption_public_key`)
+
+## Overview of state after a chain has been processed
+
+- id
+- devices
+- removedDevices
+- eventHash
+- eventVersion // for protocol versioning
+
+## Creating any chain event
+
+```ts
+transaction = {
+  prevEventHash, // is null for the createChain event
+  …
+}
+transactionHash = hash(canonicalize(transaction));
+signature = sign(transactionHash, privateKey);
+```
+
+## Cryptographic validation for all chain events
+
+```ts
+transactionHash = hash(canonicalize(transaction));
+signVerify(author.signature, transactionHash, author.publicKey);
+```
+
+This allows to validate:
+
+- the transaction is authenticated by the author
+- the transaction is not modified
+
+For the createDocumentChain event the prevEventHash is null. For all other events it must be defined. Once provided it results in the following properties:
+
+- the previousEventHash is authenticated by the author
+- the previousEventHash is not modified
+
+## Transaction Types and Validations
+
+### Create chain
+
+```ts
+transaction = {
+  type: "create",
+  id: generateId(),
+  prevEventHash: null,
+  version,
+};
+```
+
+The `id` is to identify the document by ID.
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/document-chain/src/createDocumentChain.ts
+
+Validations:
+
+- has a signingPublicKey, encryptionPublicKey and valid encryptionPublicKeySignature for the main device `signVerify(encryptionPublicKeySignature, encryptionPublicKey, signingPublicKey)`
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/document-chain/src/applyCreateChainEvent.ts
+
+### Add Share Document Device
+
+Adds a device to the document. `signingPublicKey`, `encryptionPublicKey` and `role` are required parameters, while `expiresAt` is optional. The idea behind expiresAt is that you can add short lived devices and each client, but also the server can check that expired devices are not included in e.g. workspace key rotations.
+
+In order to prevent drifts between clients the device session for example expires earlier than the expiredAt.
+
+TODO
+https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/addDevice.ts
+
+Validations:
+
+- the device does not exist in the state derived until the event
+- has a signingPublicKey, encryptionPublicKey and valid encryptionPublicKeySignature `signVerify(encryptionPublicKeySignature, encryptionPublicKey, signingPublicKey)`
+
+TODO
+https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/applyEvent.ts#L53-L69
+
+TODO also must check that the role of the author on the workspace (pass in as argument)
+
+### Remove Device
+
+Removes a device based on the provided `signingPublicKey`
+
+TODO
+https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/removeDevice.ts
+
+Validations:
+
+- the device does exist in the state derived until the event
+
+TODO
+https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/applyEvent.ts#L71-L90
+
+TODO also must check that the role of the author on the workspace (pass in as argument)

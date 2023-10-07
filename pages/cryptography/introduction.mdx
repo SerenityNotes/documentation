@@ -54,8 +54,8 @@ This needs to be still implemented in the places where it's missing:
 - Workspace chain entry: TODO
 - User chain entry: TODO
 - Document chain entry: TODO
-- Device encryptionPublicKey: `device_encryption_public_key`
-- Share document device encryptionPublicKey: TODO
+- Device encryptionPublicKey: `user_device_encryption_public_key`
+- Share document device encryptionPublicKey: `share_document_device_encryption_public_key`
 - sessionTokenSignature: TODO
 - Folder ID signature: TODO
 
@@ -65,3 +65,14 @@ There is a clear separation between the server and client code to ensure a compr
 
 - Server code is deployed on fly.io
 - Client code is a static build and deployed on Netlify
+
+## Miscellaneous
+
+Why is not one chain (basically signed event sourcing) used for a workspace?
+
+The benefit is very clear. The server could not hide single documents from a user and the complexity would be drastically reduced.
+
+This benefit though comes with a downside:
+
+- It's not possible to drastically reduce the amount of entries to that need to be processed to show a signle document.
+- Granular access would not be possible e.g. if a user only gets access to a single document though could not verify everything in the workspace chain without exposing it.

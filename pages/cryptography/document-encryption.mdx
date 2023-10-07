@@ -3,7 +3,39 @@
 // TODO Each snapshot must reference a document chain state. This is to avoid that content and access via page share links get out of sync.
 // TODO With a new chain event it's required to create a new snapshot. This is to avoid that content and access via page share links get out of sync.
 
+## Snapshot Key
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/recreateSnapshotKey/recreateSnapshotKey.ts
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/createIntroductionDocumentSnapshot/createIntroductionDocumentSnapshot.ts
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/createSnapshotKey/createSnapshotKey.ts
+
+### Snapshot Key Trace Structure
+
+Document Snaphot in a root folder example
+
+```ts
+{
+  workspaceKeyId: "5Q5_3zwQ9ZOkykoLvVNHtmz48_4Fxfvq";
+  trace: [{
+    entryId: "EWJjmGc7ErIDLQfaFBzqJJDXqLxutq6J";
+    subkeyId: 42;
+    parentId: null;
+    context: "folder__";
+  },
+  {
+    entryId: "48KAsddOZ2vhn8usF7ZLfpt_V2ohc7bT";
+    subkeyId: 4323;
+    parentId: "EWJjmGc7ErIDLQfaFBzqJJDXqLxutq6J";
+    context: "snapshot";
+  }];
+}
+```
+
 ## Document Title
+
+The document title key always references the latest snapshot key. This whenever a new snapshot key is created a new document title key is created as well and the document title re-encrypted.
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/recreateDocumentTitleKey/recreateDocumentTitleKey.ts
 
@@ -15,10 +47,30 @@ https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/decryptDo
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/decryptDocumentTitleBasedOnSnapshotKey/decryptDocumentTitleBasedOnSnapshotKey.ts
 
-## Snapshot Key
+### Document Name Key Trace Structure
 
-https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/recreateSnapshotKey/recreateSnapshotKey.ts
+Document Name in a root folder example
 
-https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/createIntroductionDocumentSnapshot/createIntroductionDocumentSnapshot.ts
-
-https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/createSnapshotKey/createSnapshotKey.ts
+```ts
+{
+  workspaceKeyId: "5Q5_3zwQ9ZOkykoLvVNHtmz48_4Fxfvq";
+  trace: [{
+    entryId: "EWJjmGc7ErIDLQfaFBzqJJDXqLxutq6J";
+    subkeyId: 42;
+    parentId: null;
+    context: "folder__";
+  },
+  {
+    entryId: "48KAsddOZ2vhn8usF7ZLfpt_V2ohc7bT";
+    subkeyId: 4323;
+    parentId: "EWJjmGc7ErIDLQfaFBzqJJDXqLxutq6J";
+    context: "snapshot";
+  },
+  {
+    entryId: "vKTOUcfeeuymQmjfTDa3D6u_QBkFGNSH";
+    subkeyId: 4323;
+    parentId: "48KAsddOZ2vhn8usF7ZLfpt_V2ohc7bT";
+    context: "doctitle";
+  }];
+}
+```
