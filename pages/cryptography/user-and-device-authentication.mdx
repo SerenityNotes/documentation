@@ -1,11 +1,67 @@
 ## User & Device Authentication
 
+## Cryptographic Dependencies and actual implementation
+
+- opaque_login: OPAQUE login flow
+- userChainAddDevice: see user-chain
+- kdf: `sodium.crypto_kdf_derive_from_key(crypto_aead_xchacha20poly1305_ietf_KEYBYTES, subkeyId, context, key)`
+- decrypt: `sodium.crypto_secretbox_opne_easy(ciphertext, nonce, key)`
+- signingKeyPairGen: `sodium.crypto_sign_keypair()`
+- encryptionKeyPairGen: `sodium.crypto_box_keypair()`
+- sign: `sodium.crypto_sign_detached(message, privateKey)`
+
 ## Login
 
-Using the OPAQUE protocol to authenticate the client with the server the MainDevice can be recovered.
+Using the OPAQUE protocol to authenticate the client with the server the MainDevice can be recovered. With the MainDevice the client automatically add the current client as new device to the user-chain. All workspace keys are decrypted and in case of a long-term session the workspace key boxes for the new device are created.
 
-TODO show crypto process
+```ts
+exportKey = opaque_login()
+encryptionKey = kdf(1111, "m_device", exportKey);
+mainDevice = decrypt(
+  ciphertext,
+  nonce,
+  encryptionKey
+);
+{
+  signingPublicKey,
+  signingPrivateKey,
+  encryptionPublicKey,
+  encryptionPrivateKey,
+  encryptionPublicKeySignature,
+  createdAt,
+} = mainDevice;
+// create device
+deviceSigningKeyPair = signingKeyPairGen();
+deviceEncryptionKeyPair = encryptionKeyPairGen();
+deviceEncryptionPublicKeySignature = sign(
+  "user_device_encryption_public_key" + deviceEncryptionKeyPair.publicKey,
+  deviceSigningKeyPair.privateKey
+);
+expiredAt = determineExpiredAt(); // undefined if permanent device (mobile), 30 days for long web session, 24h for short web session
+userChainAddDeviceEvent = userChainAddDevice(mainDevice, deviceSigningKeyPair.publicKey, deviceEncryptionKeyPair.publicKey, deviceEncryptionPublicKeySignature, expiredAt);
+sessionTokenSignature = sign(sessionToken, deviceSigningKeyPair.privateKey);
+```
 
-With the MainDevice the client automatically add the current client as new device to the user-chain. All workspace keys are decrypted and in case of a long-term session the workspace key boxes for the new device are created.
+opaque_login
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/login/LoginForm.tsx#L69-L74
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/loginHelper.ts#L69-L88
+
+decryptMainDevice
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/loginHelper.ts#L100-L104
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/decryptMainDevice/decryptMainDevice.ts
+
+UserChain.addDevice
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/loginHelper.ts#L134-L143
+
+sign sessionToken to verify the client has access to the private key of the new device (to prevent a MITM attack replacing the device)
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/loginHelper.ts#L145-L150
+
+After the device was added to the user, the client starts adding the device to known workspaces. This is triggered here:
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/login/LoginForm.tsx#L88-L90
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/workspace/attachDeviceToWorkspaces.ts
+
+The exact process is documented in the section `Workspace Encryption` und `Adding a new device to the workspace and creating the corresponding encryption box on a login`.

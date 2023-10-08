@@ -1,23 +1,5 @@
 # Client/Server (Authentication & Authorization)
 
-## Login
-
-Using the OPAQUE protocol to authenticate the client with the server the MainDevice can be recovered.
-
-TODO show crypto process
-
-With the MainDevice the client automatically add the current client as new device to the user-chain. All workspace keys are decrypted and in case of a long-term session the workspace key boxes for the new device are created.
-
-## Password Reset
-
-Not yet implemented.
-
-The idea is to allow a user to create one or possibly more recovery keys in the settings. They have to be added to each workspace chain.
-
-With the recovery key and email verification a user can take over an account and replace the MainDevice.
-
-This would require to re-run the OPAQUE registration flow in order to create a new login process.
-
 # Workspace Invitation
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/encryptWorkspaceInvitationKey/encryptWorkspaceInvitationKey.ts

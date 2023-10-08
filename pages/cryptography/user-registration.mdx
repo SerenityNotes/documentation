@@ -16,8 +16,8 @@ Password-strength is enforced by the client -> TODO
 ### Steps
 
 ```ts
-export_key = opaque_registration();
-encryptionKey = kdf(1111, "m_device", export_key);
+exportKey = opaque_registration();
+encryptionKey = kdf(1111, "m_device", exportKey);
 nonce = noncegen();
 // create device
 deviceSigningKeyPair = signingKeyPairGen();
