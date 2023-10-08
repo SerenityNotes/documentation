@@ -102,7 +102,7 @@ Validations:
 
 - has a signingPublicKey, encryptionPublicKey and valid encryptionPublicKeySignature for the main device `signVerify(encryptionPublicKeySignature, encryptionPublicKey, signingPublicKey)`
 
-https://github.com/serenity-kit/Serenity/blob/main/packages/document-chain/src/applyCreateChainEvent.ts
+https://github.com/serenity-kit/Serenity/blob/main/packages/document-chain/src/applyCreateDocumentChainEvent.ts
 
 ### Add Share Document Device
 
@@ -110,31 +110,39 @@ Adds a device to the document. `signingPublicKey`, `encryptionPublicKey` and `ro
 
 In order to prevent drifts between clients the device session for example expires earlier than the expiredAt.
 
-TODO
-https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/addDevice.ts
+https://github.com/serenity-kit/Serenity/blob/main/packages/document-chain/src/addShareDocumentDevice.ts
 
 Validations:
 
 - the device does not exist in the state derived until the event
 - has a signingPublicKey, encryptionPublicKey and valid encryptionPublicKeySignature `signVerify(encryptionPublicKeySignature, encryptionPublicKey, signingPublicKey)`
 
-TODO
-https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/applyEvent.ts#L53-L69
+https://github.com/serenity-kit/Serenity/blob/main/packages/document-chain/src/applyEvent.ts#L62-L79
 
-TODO also must check that the role of the author on the workspace (pass in as argument)
+Note: When invoking this function it must be verified that the author has the required permissions to add a device (`EDITOR` | `ADMIN`). This is not part of the chain validation.
 
 ### Remove Device
 
 Removes a device based on the provided `signingPublicKey`
 
-TODO
-https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/removeDevice.ts
+https://github.com/serenity-kit/Serenity/blob/main/packages/document-chain/src/removeShareDocumentDevice.ts
 
 Validations:
 
 - the device does exist in the state derived until the event
 
-TODO
-https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/applyEvent.ts#L71-L90
+https://github.com/serenity-kit/Serenity/blob/main/packages/document-chain/src/applyEvent.ts#L81-L95
 
-TODO also must check that the role of the author on the workspace (pass in as argument)
+Note: When invoking this function it must be verified that the author has the required permissions to add a device (`EDITOR` | `ADMIN`). This is not part of the chain validation.
+
+## Versioning
+
+Each transaction includes a version of the protocol. Once the version has been increased by one transaction it can't go lower anymore. This means every client must have the same or a higher version than the last transaction in the chain otherwise the chain is considered invalid.
+
+It also fails in case the version is higher than the currently known to prevent the chain being processed by an older client.
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/document-chain/src/applyEvent.ts#L43-L54
+
+## Miscellaneous
+
+All types are documented here: https://github.com/serenity-kit/Serenity/blob/main/packages/document-chain/src/types.ts
