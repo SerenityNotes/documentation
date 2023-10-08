@@ -1,6 +1,8 @@
 {
   "introduction": "Introduction",
   "user-chain": "User Chain (Devices)",
+  "user-registration": "User Registration",
+  "user-and-device-authentication": "User & Device Authentication",
   "workspace-chain": "Workspace Chain (Membership & Roles)",
   "workspace-encryption": "Workspace Key (Encryption)",
   "folder-encryption": "Folder Key Derivation (Encryption)",

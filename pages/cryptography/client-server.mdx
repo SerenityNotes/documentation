@@ -1,70 +1,5 @@
 # Client/Server (Authentication & Authorization)
 
-## Registration Process
-
-Password-strength is enforced by the client -> TODO
-
-## Cryptographic Dependencies and actual implementation
-
-- opaque_registration: OPAQUE registration flow
-- kdf: `sodium.crypto_kdf_derive_from_key(crypto_aead_xchacha20poly1305_ietf_KEYBYTES, subkeyId, context, key)`
-- noncegen: `sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES)`
-- signingKeyPairGen: `sodium.crypto_sign_keypair()`
-- encryptionKeyPairGen: `sodium.crypto_box_keypair()`
-- sign: `sodium.crypto_sign_detached(message, privateKey)`
-- encrypt: `sodium.crypto_secretbox_easy(message, nonce, key)`
-- createUserChain: see user-chain
-
-### Steps
-
-```ts
-export_key = opaque_registration();
-encryptionKey = kdf(1111, "m_device", export_key);
-nonce = noncegen();
-// create device
-deviceSigningKeyPair = signingKeyPairGen();
-deviceEncryptionKeyPair = encryptionKeyPairGen();
-deviceEncryptionPublicKeySignature = sign(
-  "user_device_encryption_public_key" + deviceEncryptionKeyPair.publicKey,
-  deviceSigningKeyPair.privateKey
-);
-ciphertext = encrypt(
-  {
-    signingPublicKey,
-    signingPrivateKey,
-    encryptionPublicKey,
-    encryptionPrivateKey,
-    encryptionPublicKeySignature,
-    createdAt,
-  },
-  nonce,
-  encryptionKey
-);
-```
-
-The following information is sent to the server:
-
-```ts
-{
-  registrationRecord, // OPAQUE registration record
-  mainDevice,
-  serializedUserChainEvent,
-}
-```
-
-// TODO sent to server
-
-// TODO email validation flow
-// TODO explain the goals of this flow & process
-
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/register/RegisterForm.tsx#L85-L193
-
-https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/createAndEncryptMainDevice/createAndEncryptMainDevice.ts
-
-## Registration via Invitation
-
--> registration memory store
-
 ## Login
 
 Using the OPAQUE protocol to authenticate the client with the server the MainDevice can be recovered.
@@ -82,12 +17,6 @@ The idea is to allow a user to create one or possibly more recovery keys in the 
 With the recovery key and email verification a user can take over an account and replace the MainDevice.
 
 This would require to re-run the OPAQUE registration flow in order to create a new login process.
-
-## Main Device
-
-https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/createAndEncryptMainDevice/createAndEncryptMainDevice.ts
-
-https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/decryptMainDevice/decryptMainDevice.ts
 
 # Workspace Invitation
 
