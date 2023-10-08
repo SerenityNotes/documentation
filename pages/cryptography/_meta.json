@@ -3,6 +3,7 @@
   "user-chain": "User Chain (Devices)",
   "user-registration": "User Registration",
   "user-and-device-authentication": "User & Device Authentication",
+  "user-and-device-logout": "User & Device Logout",
   "workspace-chain": "Workspace Chain (Membership & Roles)",
   "workspace-encryption": "Workspace Key (Encryption)",
   "folder-encryption": "Folder Key Derivation (Encryption)",
@@ -10,5 +11,6 @@
   "document-encryption": "Document Chain (Share Links)",
   "document-attachments": "Document Attachments",
   "document-comments": "Document Comments",
-  "client-server": "Client Server (Authentication & Authorization)"
+  "client-server": "Client Server (Authentication & Authorization)",
+  "miscellaneous": "Miscellaneous"
 }

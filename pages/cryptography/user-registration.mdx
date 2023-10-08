@@ -45,19 +45,37 @@ The following information is sent to the server:
 ```ts
 {
   registrationRecord, // OPAQUE registration record
-  mainDevice,
+  mainDevice: { // TODO duplicate as this information should be included in the serializedUserChainEvent
+    signingPublicKey,
+    encryptionPublicKey,
+    encryptionPublicKeySignature,
+  },
   serializedUserChainEvent,
 }
 ```
 
-// TODO sent to server
-
-// TODO email validation flow
-// TODO explain the goals of this flow & process
-
 https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/register/RegisterForm.tsx#L85-L193
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/createAndEncryptMainDevice/createAndEncryptMainDevice.ts
+
+The server stores this information in the database in the `UnverifiedUser` table and triggers an email with a verification code.
+
+On the client side the `username`, `password` and `createChainEvent` are stored in memory.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/register/RegisterForm.tsx#L166C11-L170
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/registrationMemoryStore.ts
+
+After that client is redirecting to the registration verification page.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/registrationVerificationScreen/RegistrationVerificationScreen.tsx
+
+The user enters the verification code and submits the form. The server checks the code and if it is valid, it creates a new `User` record in the database and the user finished the registration process.
+
+// TODO accept pending workspace invitations
+// TODO login
+
+// TODO explain the goals of this flow & process
 
 ## Registration via Invitation
 
