@@ -21,7 +21,7 @@ In the future this will include the workspace name and other workspace metadata.
 
 - generate_id: `sodium.to_base64(sodium.randombytes_buf(24))`
 - keygen: `sodium.crypto_kdf_keygen()`
-- noncegen: `sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES)` // TODO this should not be crypto_secretbox_NONCEBYTES, but rather crypto_box_NONCEBYTES - which are probably the same
+- noncegen: `sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES)`
 - asymmetric_encrypt: `sodium.crypto_box_easy(message, nonce, recipientPublicKey, senderPrivateKey)`
 - asymmetric_decrypt: `sodium.crypto_box_open_easy(ciphertext, nonce, senderPublicKey, recipientPrivateKey)`
 

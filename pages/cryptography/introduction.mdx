@@ -34,7 +34,19 @@ What can't be prevented is that the server will hide data from a user. A server 
     - Verifying signatures
     - Ensuring that all signature chains (user, workspace and document) are in the correct order and no forks are created.
 
-## Key Separation
+## Keys encryption
+
+Keys should be encrypted as Uint8Array
+
+Example:
+
+```ts
+sodium.crypto_box_easy(workspaceKey, nonce, publicKey, privateKey);
+```
+
+In the case above the workspaceKey must be a `Uint8Array`.
+
+### Key Separation
 
 Two symmetric enryption keys are encrypted using asymmetric encryption (secret_box). Specifically:
 
@@ -45,19 +57,21 @@ In order to make sure these keys are not mistaken with each other they are prefi
 
 TODO Note this is not implemented yet everywhere
 
-## Signature Context
+## Signatures
 
-In order to prevent signatures being misused in the wrong context each message is prefixed with a context string. Here is the full list:
+The content to ge signed should always be encrypted as strings
 
-This needs to be still implemented in the places where it's missing:
+The reason here is that signatures often include other data as well end it's easier to stay consistent and always use strings. In addition every string must be prefixed with the domain context to make sure signatures can't be misused for other use-cases.
+
+### Signature Domain Context
 
 - Workspace chain entry: TODO
 - User chain entry: TODO
 - Document chain entry: TODO
 - Device encryptionPublicKey: `user_device_encryption_public_key`
 - Share document device encryptionPublicKey: `share_document_device_encryption_public_key`
-- sessionTokenSignature: TODO
-- Folder ID signature: TODO
+- sessionTokenSignature: `login_session_key`
+- Folder ID signature: `folder_id`
 
 ## Code separation
 
