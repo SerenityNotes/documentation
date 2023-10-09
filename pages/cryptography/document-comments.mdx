@@ -1,15 +1,86 @@
 # Document Comments
 
-https://github.com/serenity-kit/Serenity/tree/main/packages/common/src/recreateCommentKey
+Each document can have comments and replies. A reply is a comment on a comment and there is only one level of replies. The comments are encrypted and stored in the database of the server.
 
-## Deriving a comment key
+The comments don't need to be in the document since they can reference a position in the CRDT structure of Yjs that never changes.
+
+## Goal of the Design
+
+- Comments content is encrypted and can only be decrypted by a client with access to the document. See document encryption for more details.
+- The server must be honest an provide the comments to all clients that have access to the document.
+- The comments are not stored in the document in order to allow the commenter role that can create comments, but not edit the document.
+
+## Cryptographic Dependencies and actual implementation
+
+- randomInt: `sodium.randombytes_uniform(2 ** 31 - 1)` // in JS a larger upper bound doesn't seem possible, see https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/kdfDeriveFromKey/kdfDeriveFromKey.ts#L16
+- kdf: `sodium.crypto_kdf_derive_from_key(crypto_aead_xchacha20poly1305_ietf_KEYBYTES, subkeyId, context, key)`
+- generateNonce: `sodium.randombytes_buf(sodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES)`
+- encryptAead: `sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(message, additionalData, nonce, key)`
+- decryptAead: `sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(ciphertext, additionalData, nonce, key)`
+
+Note: For `encryptAead` every message is prefixed with a block of four 0-bytes to ensure commitment. [More info here](https://github.com/serenity-kit/secsync/blob/main/packages/secsync/src/crypto/encryptAead.ts#L16-L20)
+
+## Comments State Machine
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/machines/commentsMachine.ts
+
+## Creating a comment
+
+When creating a comment first a commentKey is derived from the currently active snapshotKey. The commentKey is used to encrypt the comment.
+
+```ts
+subkeyId = randomInt();
+commentKey = kdf(subkeyId, "comment_", snapshotKey);
+nonce = generateNonce();
+ciphertext = encryptAead(fileContent, "", nonce, commentKey);
+```
+
+Create comment: https://github.com/serenity-kit/Serenity/blob/main/apps/app/machines/commentsMachine.ts#L415C9-L440
+Create reply: https://github.com/serenity-kit/Serenity/blob/main/apps/app/machines/commentsMachine.ts#L441-L464
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/createCommentKey/createCommentKey.ts
 
-## Encrypting a comment
-
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/encryptComment/encryptComment.ts
 
-## Decrypting a comment
+## Decrypting comments and replies
+
+When decrypting a comment the commentKey is derived from the currently active snapshotKey. The commentKey is used to decrypt the comment.
+
+```ts
+commentKey = kdf(subkeyId, "comment_", snapshotKey);
+commentContent = decryptAead(ciphertext, "", nonce, commentKey);
+```
+
+https://github.com/serenity-kit/Serenity/tree/main/packages/common/src/recreateCommentKey
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/decryptComment/decryptComment.ts
+
+## Deleting a comment or reply
+
+On the client side a GraphQL mutation has to be invoked.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/machines/commentsMachine.ts#L465-L478
+
+The server needs to check if the client has the permission to delete the comment. If the user has the permission the comment is deleted from the database.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/graphql/mutations/comment/deleteComments.ts
+https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/graphql/mutations/commentReply/deleteCommentReplies.ts
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/comment/deleteComments.ts
+https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/commentreply/deleteCommentReplies.ts
+
+## Not implemented yet
+
+### TODO Snapshot Key Rotation
+
+Everytime a new Snapshot is taking all the existing commentIds and related keys are stored in the Yjs doccument and the old entries are cleaned out and then they are not accessible anymore to new users or page share links.
+
+Old comment keys are kept in the document. This is necessary to decrypt old comments.
+
+### TODO Signing the document
+
+Same as a Secsync update the ciphertext should be signed with the deviceSigningPublicKey to verify the author.
+
+## Possible improvements for a future version
+
+- Comments created by users with the role `ADMIN` or `EDITOR` could be written directly into the document or at least a reference to them. This would make sure these comments are not lost if the server is not honest.

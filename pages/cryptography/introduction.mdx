@@ -82,7 +82,7 @@ There is a clear separation between the server and client code to ensure a compr
 
 ## Miscellaneous
 
-Why is not one chain (basically signed event sourcing) used for a workspace?
+## Why is not one chain (basically signed event sourcing) used for a workspace incl. all members, devices, folders, documents?
 
 The benefit is very clear. The server could not hide single documents from a user and the complexity would be drastically reduced.
 
@@ -90,3 +90,9 @@ This benefit though comes with a downside:
 
 - It's not possible to drastically reduce the amount of entries to that need to be processed to show a signle document.
 - Granular access would not be possible e.g. if a user only gets access to a single document though could not verify everything in the workspace chain without exposing it.
+
+## Possible Improvements
+
+The whole design was made with the intention to offer a secure system based on established cryptography concepts. In addition the goal was to keep the complexity for the user as low as possible and offer a good user experience.
+
+There are many possible improvements and we plan to incorporate them in the future. Suggestions are very welcome.
