@@ -8,15 +8,13 @@ The main reason is to allow the user to invalidate a Device without invalidating
 
 Other reasons:
 
-- There is no access to Secure Element on the web and in order to allow users still access through a web-interface, a Device is created for them and either only stored in memory or only valid for 30 days.
+- There is no access to Secure Element on the web and in order to allow users still access through a web-interface, a Device is created for them and stored in the browser's localstorage and has an expiration date.
 - Devices also reduce the risk of a user to completely loose their data e.g. when they lose their password.
 
 Unfortionatly this decision also comes with some downsides:
 
 - Need to encrypt for multiple device
 - Need to manage the authenticity of multiple devices
-
-**Note**: The 30 day limit is not implemented yet.
 
 ## MainDevice
 
@@ -55,20 +53,17 @@ Ideally we would use a secure storage like the `Secure Enclave` on iOS or the `K
 
 The `expo-secure-store` package is used to store a `Device` using Keychain on iOS and KeyStore on Android. Both leverage a Secure Element to keep the data secure.
 
-Code reference: https://github.com/SerenityNotes/Serenity/blob/main/apps/app/utils/device/deviceStore.ts
+Code reference: https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/device/deviceStore.ts
 
 ### Web
 
-There are two different ways how we store a `Device` on the web:
+The browser's LocalStorage is used to store a `Device`.
 
-- SessionStorage
-- LocalStorage
-
-When logging in through the web-interface there is checkbox to choose whether the user should be logged in for 30 days. If the user chooses to be logged in for 30 days, the `Device` is stored in `LocalStorage`. If the user chooses not to be logged in for 30 days, the `Device` is stored in `SessionStorage`.
+When logging in through the web-interface there is checkbox to choose whether the user should be logged in for 30 days. If the user chooses to be logged in for 30 days, the `Device` is stored in `LocalStorage`.
 
 **Note**: This is only partially implemented. Specifically the 30 day limitation is not verified anywhere yet.
 
-Code reference: https://github.com/SerenityNotes/Serenity/blob/main/apps/app/utils/device/webDeviceStore.ts
+Code reference: https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/device/webDeviceStore.ts
 
 ### Desktop
 
