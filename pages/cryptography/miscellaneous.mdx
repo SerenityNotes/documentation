@@ -1,5 +1,19 @@
 # Miscellaneous
 
+## Password Complexity
+
+Currently the only requirement is that the password must be at least 6 characters long. This can result in weak passwords and opens up the possibility for admins with access to the database or an attacker gaining access to brute-force the password and extract the `exportKey` which would break the end-to-end encryption.
+
+Therefor an open TODO is to implement a password complexity check upon registration. The strongest condenter currently is:
+
+- https://zxcvbn-ts.github.io/zxcvbn/guide/getting-started/
+
+It's based on on [Dropox's zxcvbn](https://github.com/dropbox/zxcvbn), written in Typescript, actively maintained and used by other projects e.g. [Clerk](https://clerk.com/docs/security/password-protection#password-strength)
+
+## OPAQUE
+
+One open TODO is to hard-code the server's public key into the client codebase and verify it during the registration and login process.
+
 ## Password Reset
 
 Not yet implemented.
@@ -9,3 +23,5 @@ The idea is to allow a user to create one or possibly more recovery keys in the 
 With the recovery key and email verification a user can take over an account and replace the MainDevice.
 
 This would require to re-run the OPAQUE registration flow in order to create a new login process.
+
+An example can be found https://github.com/serenity-kit/opaque/tree/main/examples/fullstack-e2e-encrypted-locker-nextjs. It also includes Verifpal proofs: https://github.com/serenity-kit/opaque/tree/main/examples/fullstack-e2e-encrypted-locker-nextjs/verifpal

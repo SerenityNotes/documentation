@@ -1,11 +1,5 @@
 # Comments
 
-When a is created it is derived from a snapshot key. The subkey id is stored together with the comment. The purpose of this is so everyone with access to the snapshot key can decrypt the comment.
-
-And everytime a new Snapshot is taking all the existing commentIds and related keys are stored in the Yjs doccument and the old entries are cleaned out and then they are not accessible anymore to new users or page share links.
-
-Still to be determined what clean out old comments mean. Most probably every comment that is not referenced in the current document.
-
 ## Test flows
 
 ### Test Flow 1
@@ -27,7 +21,3 @@ Still to be determined what clean out old comments mean. Most probably every com
 - Make an update to document (snapshot key B)
 - Create a sharelink X
   - Add a lockbox for sharelink X to snapshotKey B
-
-## Autenticity
-
-TODO how to sign the comment to proof that it is from the user that created it.
