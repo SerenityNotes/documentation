@@ -1,7 +1,64 @@
 # Client/Server (Authentication & Authorization)
 
-# Workspace Invitation
+# Server Authentication
 
-https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/encryptWorkspaceInvitationKey/encryptWorkspaceInvitationKey.ts
+The authentication process using OPAQUE results in a `sessionKey` which is associated to a user and a specific device. See user-registration.
 
-https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/decryptWorkspaceInvitationKey/decryptWorkspaceInvitationKey.ts
+This information is stored in the `Session` table. https://github.com/serenity-kit/Serenity/blob/main/apps/backend/prisma/schema.prisma#L126-L134
+
+Every GraphQL request (which use HTTPS as transport layer) sent to the server has to contain the `sessionKey` in the `Authorization` header. The server then checks if the session is valid and provides the session and user to the backend resolver.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/createServer.ts#L44-L75
+
+Here is an example of a resolver that requires a valid user.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/graphql/mutations/comment/createComment.ts#L42-L44
+
+Depending on the specific mutation further checks regarding the device are performed e.g.
+
+- if the create workspace invitation event is sent from the mainDevice of the user https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/graphql/mutations/workspace/createWorkspaceInvitation.ts#L45-L53
+- validating the sessionTokenSignature in the login step `addDevice` https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/graphql/mutations/authentication/addDevice.ts#L78-L85
+
+All sessions have an `expiredAt` set which is determined by the device type and always a bit larger than the expiration date of the device itself in case it's defined to avoid possible time differences between the client and the server. For device without an expiration data e.g. mobile and desktop device a value of 1000 years is chosen.
+
+- web: 31 days (device expiration is set to 30 days)
+- temporary-web: 25 hours (device expiration is set to 24 hours)
+- mobile | desktop: 1000 years
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/authentication/createSessionAndDevice.ts#L46-L65
+
+While a session key is connected to a `device` this is not enforced everywhere since certain interactions require a signature from the `mainDevice`.
+
+## Session & Device revocation
+
+Removing a device should also revoke the associated session, but removing the DB entry.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/device/deleteDevice.ts
+
+## Websocket Connections
+
+For the staging and production environments a `wss` connection is required. The websocket connection is authenticated by sending the `sessionKey` as a query parameter and validated before establishing the connection.
+
+```js
+`${host}/${docId}?sessionKey=${sessionKey}`;
+```
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/createServer.ts#L212-L235
+
+## Possible Improvement
+
+### Encrypting the transport layer
+
+In our threat model we assume a HTTPS connection to the server is secure and can't be intercepted. This assumption could be reduces (not eliminated) by encrypting each request to a server and response back to the client with the `session_key`.
+
+For example the client could use the `session_key` to encrypt & MAC the request body. In addition a UTC timestamp could be added and make sure neither the client nor the server accept a request older than 4 hours or in the future and therefor prevent replay attacks.
+
+### Session validation for GraphQL requests
+
+Instead of validating the user in almost every resolver, it should be done by default and only a white-list of specific mutations and queries should be allowed without a valid user.
+
+Incomplete list of mutations and queries that should be allowed without a valid user:
+
+- startRegistration
+- finishRegistration
+- workspaceInvitation

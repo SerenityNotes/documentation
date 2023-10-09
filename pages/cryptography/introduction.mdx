@@ -55,7 +55,20 @@ Two symmetric enryption keys are encrypted using asymmetric encryption (secret_b
 
 In order to make sure these keys are not mistaken with each other they are prefixed with a context byte (0x01 for workspace and 0x02 for share document).
 
-TODO Note this is not implemented yet everywhere
+TODO Note this is yet not implemented
+
+### KDF Context
+
+Each key that is derived using a KDF has a context set depending on the purpose of the key:
+
+- `m_device` - mainDevice encryption key based on the exportKey
+- `wsinvite` - workspaceInvitation encryption key
+- `folder__` - folder encryption key
+- `snapshot` - document snapshot encryption key
+- `doctitle` - document title encryption key
+- `comment_` - document comment encryption key
+
+Note: The libsodium documention states that the context is a 8 character string. This is currently not enforced by libsodium.js. See h[https://github.com/jedisct1/libsodium.js/issues/322](https://github.com/jedisct1/libsodium.js/issues/322).
 
 ## Signatures
 

@@ -1,7 +1,4 @@
 {
   "introduction": "Introduction",
-  "device": "Device",
-  "server_authentication": "Server Authentication",
-  "signup": "Sign Up",
-  "questions_and_remarks_for_the_security_audit": "Questions and remarks for the security audit"
+  "device": "Device"
 }
