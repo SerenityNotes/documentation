@@ -22,12 +22,6 @@ Unfortionatly this decision also comes with some downsides:
 
 The `MainDevice` is only held in memory when decrypted and never stored in any kind of local storage regardless if it is a Web, mobile or desktop client.
 
-## RecoveryDevice
-
-The `RecoveryDevice` is planned for the future and it will be able to recover a user's account if they lose access to their `MainDevice`.
-
-**Note**: Not yet specified in detail nor implemented.
-
 ## Structure of a Device
 
 A `Device` consists of a:
@@ -82,8 +76,6 @@ Code reference: https://github.com/SerenityNotes/Serenity/blob/main/apps/app/uti
 
 We plan to use Apple's `Keychain` on macOS and `Secret Service` on Linux and `Windows Credential Manager` on Windows.
 
-## Device Signature Chain
+## User Chain
 
-In order to verify that a `Device` belongs to a certain user each user has a `DeviceSignatureChain`. It is a chain of events (add or remove device) each signed with the main device and the previous event from which a finite set of active device can be derived.
-
-**Note**: This is not implemented yet.
+In order to verify that a `Device` belongs to a certain user each user has a `user-chain`. It is a chain of events (add or remove device) each signed with the main device and the previous event from which a finite set of active device can be derived.

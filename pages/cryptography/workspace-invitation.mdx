@@ -1,3 +1,5 @@
+# Workspace Invitation
+
 # Invitation
 
 ## Overview
@@ -42,3 +44,24 @@ Any workspace admin can revoke an invitation at any point. The purpose is to mak
 
 - https://book.keybase.io/docs/teams/seitan
 - https://github.com/local-first-web/auth
+
+![Workspace Invitation flow](./workspace-invitation-flow.png)
+Note: best to open in a separate tab
+
+In case the user succeeds
+
+// TODO accept pending workspace invitations
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/loginHelper.ts#L209C14-L220
+
+Then the client queries for pending workspace invitations, validates them and accepts them. Such a pending workspace invitation can only exist if the user signed up on the workspace invitation page.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/registrationVerificationScreen/RegistrationVerificationScreen.tsx#L67-L119
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/workspace/acceptWorkspaceInvitation.ts
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/encryptWorkspaceInvitationKey/encryptWorkspaceInvitationKey.ts
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/decryptWorkspaceInvitationKey/decryptWorkspaceInvitationKey.ts
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/acceptWorkspaceInvitationScreen/AcceptWorkspaceInvitationScreen.tsx#L79

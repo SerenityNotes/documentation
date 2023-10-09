@@ -1,6 +1,13 @@
 ## Registration Process
 
-Password-strength is enforced by the client -> TODO
+![Registration flow](./registration_flow.png)
+Note: best to open in a separate tab
+
+## Design goals
+
+- The user should be able to register with a username and password.
+- During the process a main device, device and a userChain should be created and attached to the user. No man in the middle attack should be possible resulting in a different main device or user chain or one of these being attached to a wrong sessionKey.
+- In case the user signs up from a workspace invitation page, the user should be automatically added to the workspace without the server or a man in the middle being able to change the workspace the user is added to.
 
 ## Cryptographic Dependencies and actual implementation
 
@@ -13,7 +20,7 @@ Password-strength is enforced by the client -> TODO
 - encrypt: `sodium.crypto_secretbox_easy(message, nonce, key)`
 - createUserChain: see user-chain
 
-### Steps
+### Steps without workspace invitation
 
 ```ts
 exportKey = opaque_registration();
@@ -70,18 +77,29 @@ After that client is redirecting to the registration verification page.
 
 https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/registrationVerificationScreen/RegistrationVerificationScreen.tsx
 
-The user enters the verification code and submits the form. The server checks the code and if it is valid, it creates a new `User` record in the database and the user finished the registration process.
+From here on there are two different paths depending on if the user:
 
-// TODO accept pending workspace invitations
+1. Enters the code into the current session (with the `username`, `password` and `createChainEvent` stored in memory)
+2. Open the link from the email directly.
 
-// TODO explain the goals of this flow & process
+#### Flow 1
 
-## Registration via Invitation
+The user enters the verification code and submits the form. The server checks the code and if it is valid, it creates a new `User` record in the database and the user finished the registration process. The `verifyRegistration` mutation only requires the username and the verification code. There are some concerns if this could be abused, but no valid use-case was found so far.
 
--> registration memory store
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/registrationVerificationScreen/RegistrationVerificationScreen.tsx#L175-L180
 
-# Workspace Invitation
+After that the client is automatically logged in based on the `username` and `password` stored in memory.
 
-https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/encryptWorkspaceInvitationKey/encryptWorkspaceInvitationKey.ts
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/registrationVerificationScreen/RegistrationVerificationScreen.tsx#L198C15-L198C46
 
-https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/decryptWorkspaceInvitationKey/decryptWorkspaceInvitationKey.ts
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/registrationVerificationScreen/RegistrationVerificationScreen.tsx#L121-L166
+
+The user is done in this case and redirected to onboarding.
+
+#### Flow 2
+
+In case the user open the email link the username and verification code are part of the query parameters and the user lands on the RegistrationVerificationScreen. The `verifyRegistration` mutation can be triggered and since on the server only the username and the verification code are required this can be done without being logged in. There are some concerns if this could be abused, but no valid use-case was found so far.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/authentication/finalizeRegistration.ts#L123-L134
+
+The user is sent to the login page where the password from before has to be entered. This triggeres the login process as described in the user authentication section in the documentation.
