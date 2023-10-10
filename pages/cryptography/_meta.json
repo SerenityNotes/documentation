@@ -13,5 +13,6 @@
   "document-attachments": "Document Attachments",
   "document-comments": "Document Comments",
   "client-server": "Client Server (Authentication & Authorization)",
+  "secure-client-storage": "Secure Client Storage",
   "miscellaneous": "Miscellaneous"
 }

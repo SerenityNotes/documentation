@@ -94,34 +94,6 @@ Since the chain is public all the meta data about who has access to the group an
 
   - The purpose is to close the chain so no one else can attach more events to it. The event must be signed by >50% of the admins.
 
-#### Structure
-
-Example structure of an event:
-
-```json
-{
-  // the purpose of authors being an array is so that multiple users can sign an event and declare themselves as authors
-  "authors": [
-    {
-      // public signing key of creator of the event or others that signed it
-      "publicKey": "pkcVysaH_mC-TpXzZEAAeB47rIqsWwubaM4stZQu-B4",
-      // signature of the hash of the prev transaction + the hash of the current transaction
-      "signature": "q5BHaR8Wu1CCA6mt-XCwmxuYpVU1-6J5E_FmxgWu_C63yfCJ9IwFh9bBMX3WPAdMN_yMFMAK3Ygapjd96qKHCg"
-    }
-  ],
-  // hash of the prev transaction
-  "prevHash": "M-LtpoR7cMzADedkf0TXAPVIXQR5kj7T-gCtcgNaFwu1IShI84B5PaXULQjQHMVANiMTyRyCcsne389jHIRvng",
-  // transaction is the actual event content
-  "transaction": {
-    "type": "update-member",
-    "isAdmin": true,
-    "canAddMembers": true,
-    "canRemoveMembers": true,
-    "memberSigningPublicKey": "EfOSyGYcwLdVjRSJDimpEFB2_XuXd2oCCh7f8I4VlwY"
-  }
-}
-```
-
 ### EncryptedState Structure
 
 Example structure of the encrypted state:
@@ -149,22 +121,6 @@ Example structure of the encrypted state:
   }
 ]
 ```
-
-### Utility functions
-
-- `addAuthorToEvent`
-- `createInvitation` TODO
-- `acceptInvitation` TODO
-- `revokeInvitation` TODO
-
-### Invitation Process (TODO)
-
-- create invitation (to be storred in the encrypted part)
-  - unique string id
-  - author
-- accept invitation
-  - id
-  - signature of the unique string (proof) by invitee
 
 #### Error Philosophy
 

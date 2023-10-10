@@ -1,19 +1,78 @@
 # Document Encryption
 
-// TODO Each snapshot must reference a document chain state. This is to avoid that content and access via page share links get out of sync.
-// TODO With a new chain event it's required to create a new snapshot. This is to avoid that content and access via page share links get out of sync.
+## Document Content Encryption
 
-## Snapshot Key
+Document content encryption is using [secsync](https://www.secsync.com/docs/getting-started). It was developed in parallel to Serenity to provide a secure and scalable document encryption solution.
 
-https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/recreateSnapshotKey/recreateSnapshotKey.ts
+More information about the encryption can be found in the documentation:
+
+- [Security & Privacy Considerations
+  ](https://www.secsync.com/docs/security_and_privacy/considerations)
+- [Threat Library
+  ](https://www.secsync.com/docs/security_and_privacy/threat_library)
+- [Specification](https://www.secsync.com/docs/specification)
+- [Error Handling](https://www.secsync.com/docs/error-handling)
+
+## Cryptographic Dependencies and actual implementation
+
+- randomInt: `sodium.randombytes_uniform(2 ** 31 - 1)` // in JS a larger upper bound doesn't seem possible, see https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/kdfDeriveFromKey/kdfDeriveFromKey.ts#L16
+- kdf: `sodium.crypto_kdf_derive_from_key(crypto_aead_xchacha20poly1305_ietf_KEYBYTES, subkeyId, context, key)`
+- generateNonce: `sodium.randombytes_buf(sodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES)`
+- encryptAead: `sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(message, additionalData, nonce, key)`
+- decryptAead: `sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(ciphertext, additionalData, nonce, key)`
+
+Note: For `encryptAead` every message is prefixed with a block of four 0-bytes to ensure commitment. [More info here](https://github.com/serenity-kit/secsync/blob/main/packages/secsync/src/crypto/encryptAead.ts#L16-L20)
+
+## Usage in Serenity
+
+The Page component integrates with secsync here: https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L117-L263
+
+There are two main aspects on how Secsync is used in Serenity:
+
+- The publicData (AAD) of each Snapshot contains the full KeyDerivationTrace for the Snapshot key. This allows anyone with access to the referenced workspaceKey to decrypt the Snapshot key and therefor decrypt the document.
+- Also the documentTitle ciphertext, nonce and KeyDerivationTrace are sent along with ever Snapshot. This allows anyone with access to the referenced Snapshot key to decrypt the documentTitle. Currently this is not part of the AD, but it should be and will be fixed this week (TODO).
+
+### Important params
+
+- `documentId`: the documentId created by the documentChain - https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L120
+- `signatureKeyPair`: the client's device key pairs https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/pageScreen/PageScreen.tsx#L115-L121
+
+### Creating a new Document incl. a Snapshot
+
+When creating a document from the sidebar first the parentFolder's key is derived. Ever document has a parentFolder as Documents can't exist without one.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/sidebarFolder/SidebarFolder.tsx#L272-L284
+
+Then the full KeyDerivationTrace for the Snapshot is constructed including the snapshotKey entry.
+
+```ts
+subkeyId = randomInt();
+snapshotKey = kdf(subkeyId, "snapshot", parentFolderKey);
+```
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/sidebarFolder/SidebarFolder.tsx#L285-L295
+
+With it a new Snapshot is created.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/sidebarFolder/SidebarFolder.tsx#L301-L321
+
+The document title key is derived from the Snapshot key and encrypted. (explained in more detail further down on this Page)
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/sidebarFolder/SidebarFolder.tsx#L322-L332
+
+All the data is sent to the backend and the document is created in the database.
+
+#### Introduction Document on Workspace Creation
+
+Note: When creating a new workspace it is created with one folder and an introduction document prefilled with content.
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/createIntroductionDocumentSnapshot/createIntroductionDocumentSnapshot.ts
 
-https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/createSnapshotKey/createSnapshotKey.ts
-
-### Snapshot Key Trace Structure
+#### Snapshot Key Trace Structure
 
 Document Snaphot in a root folder example
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/createSnapshotKey/createSnapshotKey.ts
 
 ```ts
 {
@@ -33,44 +92,86 @@ Document Snaphot in a root folder example
 }
 ```
 
+### Creating a new Snapshot for an existing Document
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L128-L180
+
+What's known to the user is the parentFolderId and first the parent folder's key has to be derived. This is done by fetching active workspaceKeyId and the folder trace (without keys).
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/createNewSnapshotKey/createNewSnapshotKey.ts#L23-L34
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/folder/createFolderKeyDerivationTrace.ts#L12-L38
+
+Then the actual keys are derived for the KeyDerivationTrace and the last entry's key is used as the parent folder key.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/createNewSnapshotKey/createNewSnapshotKey.ts#L35-L48
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/deriveKeysFromKeyDerivationTrace/deriveKeysFromKeyDerivationTrace.ts#L16
+
+With this key a new snapshot key is derived and pushed to the end of the new KeyDerivationTrace including the new snapshot key. The trace as well as the new snapshot key are provided to secsync to encrypt the new snapshot content.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L174-L177
+
+### Derivation of a Snapshot Key to decrypt a Snapshot
+
+In the callback `getSnapshotKey` the Snapshot key is derived from the workspaceKey and the KeyDerivationTrace stored in the publicData (AAD) of the Snapshot.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L181-L202
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/deriveExistingSnapshotKey/deriveExistingSnapshotKey.ts#L10
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/recreateSnapshotKey/recreateSnapshotKey.ts
+
+### Validating collaborators
+
+In the callback `isValidCollaborator` each snapshot, update or ephemeral message is verified if the author is a member of the workspace.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L213-L254
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/findVerifiedUserByDeviceSigningPublicKey/findVerifiedUserByDeviceSigningPublicKey.ts (TODO should not automatically include all removed or expired devices)
+
+Currenlty this doesn't include already removed devices or devices from removed members. These can also be valid, but therefor the implementation needs to be refined and snapshots need to include in their public data a reference to a workspace chain event as well as the user chain events for all members.
+
+Whenever a member or a device of a member is removed a new snapshot we new references should be created. This is an open TODO.
+
 ## Document Title
 
-The document title key always references the latest snapshot key. This whenever a new snapshot key is created a new document title key is created as well and the document title re-encrypted.
+The document title shows up in the sidebar and to efficiently list the documents in a folder the document title can be decrypted independently from the document content. That said the document title key always references the latest snapshot key. This whenever a new snapshot key is created a new document title key is created as well and the document title re-encrypted.
 
-https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/recreateDocumentTitleKey/recreateDocumentTitleKey.ts
+### Encrypting a new Document Title
+
+```ts
+subkeyId = randomInt();
+documentTitleKey = kdf(subkeyId, "doctitle", snapshotKey);
+nonce = generateNonce();
+ciphertext = encryptAead(documentTitle, {}, nonce, documentTitleKey);
+```
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L155-L169
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/createDocumentTitleKey/createDocumentTitleKey.ts
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/encryptDocumentTitle/encryptDocumentTitle.ts
 
-https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/decryptDocumentTitle/decryptDocumentTitle.ts
+## Decrypting the Document Title
+
+The document title shows up in the sidebar and to efficiently list the documents in a folder the document title can be decrypted independently from the document content.
+
+```ts
+documentTitleKey = kdf(subkeyId, "doctitle", snapshotKey);
+documentTitle = decryptAead(ciphertext, {}, nonce, documentTitleKey);
+```
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/decryptDocumentTitleBasedOnSnapshotKey/decryptDocumentTitleBasedOnSnapshotKey.ts
 
-### Document Name Key Trace Structure
+https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/decryptDocumentTitle/decryptDocumentTitle.ts
 
-Document Name in a root folder example
+https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/recreateDocumentTitleKey/recreateDocumentTitleKey.ts
 
-```ts
-{
-  workspaceKeyId: "5Q5_3zwQ9ZOkykoLvVNHtmz48_4Fxfvq";
-  trace: [{
-    entryId: "EWJjmGc7ErIDLQfaFBzqJJDXqLxutq6J";
-    subkeyId: 42;
-    parentId: null;
-    context: "folder__";
-  },
-  {
-    entryId: "48KAsddOZ2vhn8usF7ZLfpt_V2ohc7bT";
-    subkeyId: 4323;
-    parentId: "EWJjmGc7ErIDLQfaFBzqJJDXqLxutq6J";
-    context: "snapshot";
-  },
-  {
-    entryId: "vKTOUcfeeuymQmjfTDa3D6u_QBkFGNSH";
-    subkeyId: 4323;
-    parentId: "48KAsddOZ2vhn8usF7ZLfpt_V2ohc7bT";
-    context: "doctitle";
-  }];
-}
-```
+## Not implemented yet
+
+One open TODO is that each snapshot must reference a document chain state. This is to avoid that content and access via page share links get out of sync.
+
+Another open TODO is that with a new documentChain event it's required to create a new snapshot. This is to avoid that content and access via page share links get out of sync.
+
+Another open TODO is that the documentTitleData (ciphertext, nonce, KeyDerivationTrace) should be part of the publicData (AAD) of a Snapshot.

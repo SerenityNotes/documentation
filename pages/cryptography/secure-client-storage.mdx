@@ -1,0 +1,38 @@
+# Secure Client Storage
+
+The following information should be stored in there:
+
+- device private keys (signing and encryption)
+- sessionKey (OPAQUE)
+- unencrypted content (folder names, document titles, document names)
+- chain events (workspace-chains, user-chains, document-chains)
+
+Therefor an encrypted SQLite database is used. Specifically https://github.com/sqlcipher/sqlcipher which is encrypted with one master key.
+
+## Desktop clients
+
+For the desktop devices https://github.com/signalapp/better-sqlite3 is used. It is a SQLCipher implementation working in Electron.
+
+To store the master key electron offers a https://www.electronjs.org/docs/latest/api/safe-storage and integrates with the macOS Keychain and Windows Credential Manager on Windows.
+
+### iOS and Android
+
+For the mobile devices (ReactNative) currently there is no secure implementation and we are looking into forking https://github.com/margelo/react-native-quick-sqlite to support SQLCipher.
+
+The `expo-secure-store` package is used to store a `Device` using Keychain on iOS and KeyStore on Android. Both leverage a Secure Element to keep the data secure.
+
+Code reference: https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/device/deviceStore.ts
+
+### Web
+
+Since in a web client no secure storage available, it's not planned to store data locally. Possibly hashes of the chains (e.g. workspace-chain) could be stored, but this has not yet been decided.
+
+The browser's LocalStorage is used to store a device private keys and sessionKey. This is not as secure as other storage options, but it's the only option available. To reduce the risk an expiration data is set.
+
+Code reference: https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/device/webDeviceStore.ts
+
+## Web client
+
+## Current state
+
+As of today only the private keys and sessionToken are stored in the secure storage and no other data is stored locally.

@@ -2,6 +2,14 @@
 
 Each workspace has a workspace-chain to determine the membership and role of a user. The chain is supposed to be immutable. Items can't be reordered and no forks are allowed. In case a fork is dedected the chain is considered invalid.
 
+Different clients will do/can do different validations based on their capabilities. On a with a secure storage the chain for each workspace is stored in a the secure storage. The idea is that the client only asks the server only for new chain items and verifies that these are valid. In case an invalid item would appear an exception is thrown, the user informed and the entiry workspace should go into a read-only mode. Currently neither Desktop nor Mobile clients have have this implemented and store the workspace-chain in a secure storage.
+
+If no secure storage is available e.g. in a web client the full workspace chain is downloaded and process upon loading the web application and in stored in memory. This means a web client can't dedect a fork, except if it's happening while having an active session. See the current implementation: https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/Navigation.tsx#L207-L247
+
+In the future a client without a secure storage could store the last chain event hash and verify that it's part of the chain. If these hashes get leaked there is some meta-data leaked but it doesn't result in leaking of encrypted content. There is a trade-off between verifying the chain and leaking meta-data.
+
+## Structure
+
 The chain is a series of events where each event contains a
 
 - transaction
@@ -41,6 +49,31 @@ Based on the workspace-chain a current state of the members can be derived.
 - lastEventHash
 - encryptedStateClock // unused at the moment
 - workspaceChainVersion // for protocol versioning
+
+#### Structure
+
+Example structure of an event:
+
+```json
+{
+  // the purpose of authors being an array is so that multiple users can sign an event and declare themselves as authors - currently not in use in Serenity
+  "authors": [
+    {
+      // public signing key of creator of the event or others that signed it
+      "publicKey": "pkcVysaH_mC-TpXzZEAAeB47rIqsWwubaM4stZQu-B4",
+      // signature of the hash of the prev transaction + the hash of the current transaction
+      "signature": "q5BHaR8Wu1CCA6mt-XCwmxuYpVU1-6J5E_FmxgWu_C63yfCJ9IwFh9bBMX3WPAdMN_yMFMAK3Ygapjd96qKHCg"
+    }
+  ],
+  // hash of the prev transaction
+  "prevHash": "M-LtpoR7cMzADedkf0TXAPVIXQR5kj7T-gCtcgNaFwu1IShI84B5PaXULQjQHMVANiMTyRyCcsne389jHIRvng",
+  // transaction is the actual event content
+  "transaction": {
+    "type": "update-member",
+    …
+  }
+}
+```
 
 ## Creating any chain event
 
@@ -267,3 +300,7 @@ NOTE: This check is not yet implemented (only in the user-chain)
 ## Miscellaneous
 
 All types are documented here: https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/types.ts
+
+## Open Questions
+
+An open TODO is to verify if there are checks if the current user's mainDevice is actually part of the chain. If this is not the case the server could provide a workspace the user never agreed to be part of.
