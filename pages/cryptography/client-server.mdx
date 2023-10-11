@@ -1,6 +1,21 @@
 # Client/Server (Authentication & Authorization)
 
-# Server Authentication
+## CORS Setup
+
+For the production environment the allowed list of origins is limited to the following domains:
+
+- https://www.serenityapp.page
+- serenity-desktop://app // electron desktop app
+
+For staging and development the allowed list of origins is:
+
+- https://www.serenity.li // staging web app
+- http://localhost:19006 // development & e2e web app
+- http://localhost:4000 // needed for GraphiQL in development
+- http://localhost:4001 // needed for GraphiQL in e2e
+- serenity-desktop://app // electron desktop app
+
+## Server Authentication
 
 The authentication process using OPAQUE results in a `sessionKey` which is associated to a user and a specific device. See user-registration.
 
