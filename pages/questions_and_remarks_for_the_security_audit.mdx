@@ -1,9 +1,26 @@
 # Questions and Remarks for the Security Audit
 
-Repositories:
+## Primary Goals
 
-- https://github.com/SerenityNotes/react-native-libsodium
-- https://github.com/SerenityNotes/serenity
+These are the main goals of the security audit:
+
+1. Verify that the server can never see content (content text, images, comment text etc.) of documents or folder names. In order words. This assumes that the client is not compromised. This includes that the server can never just inject an entry into a response and this results forcing a client to encrypt content for the server nor sign content for the server to get access e.g. a workspace chain.
+
+2. Verify that the backend service is not vulnerable to common attacks like SQL injection or the Websocket connection can be compromised.
+
+## Secondary Goals (if time and budget allows)
+
+1. Verify that the checks and verifications to keep the server honest can't be compromised. One example is that the server wants to withhold specific updates on a document from a client. For the server it should only be possible to withhold all or none.
+
+## Repositories
+
+The app repository is https://github.com/serenity-kit/serenity
+
+Related repositories we developed and use in Serenity:
+
+- https://github.com/serenity-kit/react-native-libsodium (audit out of scope, except for one question futher down)
+- https://github.com/serenity-kit/opaque (audit in progress by another team)
+- https://github.com/serenity-kit/react-native-opaque (audit in progress by another team)
 
 ## Device
 
@@ -21,11 +38,11 @@ What is the downside? Only one I can think of is eventuall switching to a differ
 
 ## React-Native-Libsodium
 
-- Is the `memcpy` appraoch fine?
+- Is the `memcpy` appraoch fine? https://github.com/serenity-kit/react-native-libsodium/blob/4773086b8f25fda31e6c68606ddf8dddf826bc58/cpp/react-native-libsodium.cpp#L82 I'm not a C++ expert and deadling with memory is always scary. I'm not sure if there is a better way to do this.
 
 ## HTTPS connections
 
-- Are there any HTTP security feautes we should activate? (e.g. HSTS)
+- Are there any HTTP security feautes we should activate? (HSTS is on)
 
 ## AEAD Encryption
 
@@ -33,7 +50,6 @@ What is the downside? Only one I can think of is eventuall switching to a differ
   - We are creating an empty snapshot whenever we create a document. Could this reveal the key?
   - The updates are very small when syncing in real time (often only one character). Is this too deterministic and could this reveal the key?
     If so should we add a random factor to every update or how to best resolve this?
-    
 - What about commitment regarding one (plaintext, AAD) pair matching only one (ciphertext, authentication tag) pair https://github.com/serenity-kit/Serenity/pull/731/commits/95184cdd5d7beb5c31fe990d874e4274beedfbc0 & https://github.com/serenity-kit/naisho/commit/f64c02b2b91ca085a2f48e7440a755c313a5397b
 
 ## Websocket Connections
@@ -44,10 +60,10 @@ What is the downside? Only one I can think of is eventuall switching to a differ
 - Is the `webSocketServer` setup fine or should we restrict `maxPayload` for example?
 - Is `webSocketServer.handleUpgrade` handled correctly?
 
-## Protocol Versioning
-
-- What are good ways to do protocol versioning?
-
 ## Key separation and derivation
 
 - Is our way of key separation sufficient? How can we improve?
+
+## Protocol Versioning
+
+- Any recommendations for protocol versioning for all our utils that are so closely tied to the application. Any best practices?
