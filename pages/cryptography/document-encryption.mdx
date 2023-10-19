@@ -30,7 +30,7 @@ The Page component integrates with secsync here: https://github.com/serenity-kit
 There are two main aspects on how Secsync is used in Serenity:
 
 - The publicData (AAD) of each Snapshot contains the full KeyDerivationTrace for the Snapshot key. This allows anyone with access to the referenced workspaceKey to decrypt the Snapshot key and therefor decrypt the document.
-- Also the documentTitle ciphertext, nonce and KeyDerivationTrace are sent along with ever Snapshot. This allows anyone with access to the referenced Snapshot key to decrypt the documentTitle. Currently this is not part of the AD, but it should be and will be fixed this week (TODO).
+- Also the documentTitle ciphertext, nonce and KeyDerivationTrace are sent along with ever Snapshot. This allows anyone with access to the referenced Snapshot key to decrypt the documentTitle. We considered making the title ciphertext and nonce part of the Snapshot AAD, but then a client would need to do a new Snapshot when updating the title. It was a trade-off between cryptographically binding them together vs flexibility to update the title separately.
 
 ### Important params
 
