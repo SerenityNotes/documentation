@@ -1,7 +1,5 @@
 # Document Chain
 
-Note: the document chain itself exists, but is yet not integrated.
-
 Each document has a document-chain to determine which share devices have been created. A share device is a device that is provided to an external user to interact only with this specific document. These entries can be revoked manually, but also expire based on the expiredAt property. In addition a role must be defined to determine the permissions of the share device. The role can be one of the following:
 
 - viewer
@@ -144,6 +142,12 @@ Each transaction includes a version of the protocol. Once the version has been i
 It also fails in case the version is higher than the currently known to prevent the chain being processed by an older client.
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/document-chain/src/applyEvent.ts#L43-L54
+
+## App Integration
+
+Whenever a new document is created a new document chain is created with it: https://github.com/serenity-kit/Serenity/pull/806/files
+
+TODO reference the first documentChain hash in every snapshot to bind those two together
 
 ## Miscellaneous
 
