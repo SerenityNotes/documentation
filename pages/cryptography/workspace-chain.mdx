@@ -297,6 +297,10 @@ Each transaction includes a version of the protocol. Once the version has been i
 
 NOTE: This check is not yet implemented (only in the user-chain)
 
+### Server Checks
+
+When resolving the state on the backend also the knownVersion has to passed in. This ensures are client doesn't send a chain with a higher version than the server knows.
+
 ## Miscellaneous
 
 All types are documented here: https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/types.ts

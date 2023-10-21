@@ -143,6 +143,16 @@ It also fails in case the version is higher than the currently known to prevent 
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/document-chain/src/applyEvent.ts#L43-L54
 
+### Server Checks
+
+When resolving the state on the backend also the knownVersion has to passed in. This ensures are client doesn't send a chain with a higher version than the server knows.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/document/createDocument.ts#L63-L66
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/document/createDocumentShareLink.ts#L80-L84
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/document/removeDocumentShareLink.ts#L54-L58
+
 ## App Integration
 
 Whenever a new document is created a new document chain is created with it: https://github.com/serenity-kit/Serenity/pull/806/files

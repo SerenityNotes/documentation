@@ -152,6 +152,10 @@ It also fails in case the version is higher than the currently known to prevent 
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/applyEvent.ts#L34-L45
 
+### Server Checks
+
+When resolving the state on the backend also the knownVersion has to passed in. This ensures are client doesn't send a chain with a higher version than the server knows.
+
 ## Miscellaneous
 
 All types are documented here: https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/types.ts
