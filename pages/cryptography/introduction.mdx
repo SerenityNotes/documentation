@@ -90,12 +90,14 @@ The reason here is that signatures often include other data as well end it's eas
 
 There is a clear separation between the server and client code to ensure a compromised server can't trick a client in breaking the security model.
 
-- Server code is deployed on fly.io
+- Server code is deployed on fly.io (API Service)
 - Client code is a static build and deployed on Netlify
+
+This is especially important for the Opaque protocol. When the API service is compromised, clients using high-entropy passwords remain secure, thanks to Argon2 running on the client side. However, if a weak password is employed and the API service is breached or the database is leaked, an attacker can relatively effortlessly target the export-key by executing the protocol using the correct server values for a specific registration record.
 
 ## Miscellaneous
 
-## Why is not one chain (basically signed event sourcing) used for a workspace incl. all members, devices, folders, documents?
+## Why not one chain (basically signed event sourcing) used for a workspace incl. all members, devices, folders, documents?
 
 The benefit is very clear. The server could not hide single documents from a user and the complexity would be drastically reduced.
 
