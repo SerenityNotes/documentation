@@ -52,10 +52,9 @@ The following information is sent to the server:
 ```ts
 {
   registrationRecord, // OPAQUE registration record
-  mainDevice: { // TODO duplicate as this information should be included in the serializedUserChainEvent
-    signingPublicKey,
-    encryptionPublicKey,
-    encryptionPublicKeySignature,
+  encryptedMainDevice: {
+    ciphertext,
+    nonce,
   },
   serializedUserChainEvent,
 }
