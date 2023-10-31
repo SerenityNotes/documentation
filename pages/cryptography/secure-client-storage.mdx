@@ -9,6 +9,8 @@ The following information should be stored in there:
 
 Therefor an encrypted SQLite database is used. Specifically https://github.com/sqlcipher/sqlcipher which is encrypted with one master key. The master key is stored in a secure storage supported by a Secure Element. If no such storage is available no data is stored locally.
 
+All code related to the SQLite database integration can be found in this folder https://github.com/serenity-kit/Serenity/tree/main/apps/app/store. Currently SQLCipher is not integrated in any environment and therefor only an in-memory database is used for local state.
+
 ## Desktop clients
 
 For the desktop devices https://github.com/signalapp/better-sqlite3 is used. It is a SQLCipher implementation working in Electron.
