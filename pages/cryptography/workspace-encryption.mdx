@@ -2,14 +2,14 @@
 
 Each workspace has one currently active workspace key and can have multiple previous workspace keys.
 
-All keys (except document attachment keys) to encrypt data are derived from the currently active workspace key using key derivation. Currently these are keys to encrypt:
+The Workspace info (currently only the workspace name) is directly encrypted with a workspace key.
+
+Keys (except document attachment keys) to encrypt workspace data are derived from the currently active workspace key using key derivation. These are keys to encrypt:
 
 - folder names
 - document names
 - document content & cursor information (Secsync snapshots, updates and ephemeral messages)
 - document comments
-
-In the future this will include the workspace name and other workspace metadata.
 
 ## Goals of this Design
 
@@ -24,6 +24,8 @@ In the future this will include the workspace name and other workspace metadata.
 - noncegen: `sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES)`
 - asymmetric_encrypt: `sodium.crypto_box_easy(message, nonce, recipientPublicKey, senderPrivateKey)`
 - asymmetric_decrypt: `sodium.crypto_box_open_easy(ciphertext, nonce, senderPublicKey, recipientPrivateKey)`
+- encryptAead: `sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(message, additionalData, nonce, key)`
+- decryptAead: `sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(ciphertext, additionalData, nonce, key)`
 
 ## Initially generating a workspace key and the corresponding encryption boxes
 
@@ -122,6 +124,35 @@ https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/a
 https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/workspace/rotateWorkspaceKey.ts
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/encryptWorkspaceKeyForDevice/encryptWorkspaceKeyForDevice.ts
+
+## Encrypting workspace info (name)
+
+```ts
+nonce = generateNonce();
+ciphertext = encryptAead(workspaceInfo, {}, nonce, workspaceKey);
+```
+
+During workspace creation:
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/createWorkspaceForm/CreateWorkspaceForm.tsx#L167-L170
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/encryptWorkspaceInfo/encryptWorkspaceInfo.ts
+
+or also in the settings: https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/workspaceSettingsGeneralScreen/WorkspaceSettingsGeneralScreen.tsx#L94-L97
+
+## Decrypting workspace info (name)
+
+```ts
+workspaceInfo = decryptAead(ciphertext, "", nonce, key);
+```
+
+In the settings:
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/machines/workspaceSettingsLoadWorkspaceMachine.ts#L164-L180
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/decryptWorkspaceInfo/decryptWorkspaceInfo.ts
+
+Or in the account menu:
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/accountMenu/AccountMenu.tsx#L88-L100
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/accountMenu/AccountMenu.tsx#L195-L209
 
 ## Open Questions
 
