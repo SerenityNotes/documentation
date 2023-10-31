@@ -68,7 +68,7 @@ Each key that is derived using a KDF has a context set depending on the purpose 
 - `doctitle` - document title encryption key
 - `comment_` - document comment encryption key
 
-Note: The libsodium documention states that the context is a 8 character string. This is currently not enforced by libsodium.js. See h[https://github.com/jedisct1/libsodium.js/issues/322](https://github.com/jedisct1/libsodium.js/issues/322).
+Note: The libsodium documention states that the context is a 8 character string. This is currently not enforced by libsodium.js. See [https://github.com/jedisct1/libsodium.js/issues/322](https://github.com/jedisct1/libsodium.js/issues/322).
 
 ## Signatures
 
@@ -78,12 +78,18 @@ The reason here is that signatures often include other data as well end it's eas
 
 ### Signature Domain Context
 
-- Workspace chain entry: TODO
-- User chain entry: TODO
-- Document chain entry: TODO
-- Device encryptionPublicKey: `user_device_encryption_public_key`
-- Share document device encryptionPublicKey: `share_document_device_encryption_public_key`
-- sessionTokenSignature: `login_session_key`
+- Workspace chain entry:
+  - Chain Event: `workspace_chain`
+  - Invitation: `workspace_chain_invitation`
+  - Accept Invitation: `workspace_chain_accept_invitation`
+- User chain:
+  - Chain Event: `user_chain`
+  - User device signing_key proof `user_device_signing_key_proof`
+  - User device encryption_public_key: `user_device_encryption_public_key`
+- Document chain:
+  - Chain Event: `document_chain`
+  - Share document device encryptionPublicKey: `share_document_device_encryption_public_key`
+- SessionToken signature: `login_session_key`
 - Folder ID signature: `folder_id`
 
 ## Code separation
