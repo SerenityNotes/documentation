@@ -122,12 +122,23 @@ Adds a device to the user. `signingPublicKey` & `encryptionPublicKey` are requir
 
 In order to prevent drifts between clients the device session for example expires earlier than the expiredAt.
 
+In addition the signing private key is used to sign the prevEventHash. This allows to verify that the user adding the device even has access to the private key of the device that is being added. Otherwise the user could add a device that is not theirs. There is no value in doing so as a user, but does not hurt to prevent it.
+
+```ts
+deviceSigningContent = canonicalize(
+  userDeviceSigningKeyProofDomainContext,
+  prevEventHash
+);
+deviceSigningKeyProof = sign(deviceSigningContent, deviceSigningPrivateKey);
+```
+
 https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/addDevice.ts
 
 Validations:
 
 - the device does not exist in the state derived until the event
 - has a signingPublicKey, encryptionPublicKey and valid encryptionPublicKeySignature `signVerify(encryptionPublicKeySignature, encryptionPublicKey, signingPublicKey)`
+- deviceSigningKeyProof is valid `signVerify(deviceSigningKeyProof, deviceSigningContent, deviceSigningPublicKey)`
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/applyEvent.ts#L53-L69
 
