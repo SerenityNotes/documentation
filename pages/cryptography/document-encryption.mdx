@@ -20,6 +20,9 @@ More information about the encryption can be found in the documentation:
 - generateNonce: `sodium.randombytes_buf(sodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES)`
 - encryptAead: `sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(message, additionalData, nonce, key)`
 - decryptAead: `sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(ciphertext, additionalData, nonce, key)`
+- generateBoxNonce: `sodium.randombytes_buf(sodium.crypto_box_NONCEBYTES)`
+- asymmetric_encrypt: `sodium.crypto_box_easy(message, nonce, recipientPublicKey, senderPrivateKey)`
+- asymmetric_decrypt: `sodium.crypto_box_open_easy(ciphertext, nonce, senderPublicKey, recipientPrivateKey)`
 
 Note: For `encryptAead` every message is prefixed with a block of four 0-bytes to ensure commitment. [More info here](https://github.com/serenity-kit/secsync/blob/main/packages/secsync/src/crypto/encryptAead.ts#L16-L20)
 
@@ -112,6 +115,22 @@ With this key a new snapshot key is derived and pushed to the end of the new Key
 
 https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L174-L177
 
+In addition to make sure the content can be decrypted by a document share link a new encrypted box is created for each document share link and sent along with the new snapshot.
+
+```ts
+// for each active document share link of the document (determined by the document chain)
+nonce = generateBoxNonce();
+boxCiphertext = asymmetric_encrypt(
+  snapshotKey,
+  nonce,
+  shareLinkDevicePublicKey,
+  senderDeviceEncryptionPrivateKey
+);
+```
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L166-L183
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/document/createDocumentShareLinkDeviceBox.ts
+
 ### Derivation of a Snapshot Key to decrypt a Snapshot
 
 In the callback `getSnapshotKey` the Snapshot key is derived from the workspaceKey and the KeyDerivationTrace stored in the publicData (AAD) of the Snapshot.
@@ -121,6 +140,19 @@ https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page
 https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/deriveExistingSnapshotKey/deriveExistingSnapshotKey.ts#L10
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/recreateSnapshotKey/recreateSnapshotKey.ts
+
+### Decrypting a Snapshot key with a document share link
+
+```ts
+workspaceKey = asymmetric_decrypt(
+  boxCiphertext,
+  nonce,
+  senderDeviceEncryptionPublicKey,
+  shareLinkDevicePrivateKey
+);
+```
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/sharePage/SharePage.tsx#L95C6-L107
 
 ### Validating collaborators
 
@@ -173,5 +205,3 @@ https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/recreateD
 One open TODO is that each snapshot must reference a document chain state. This is to avoid that content and access via page share links get out of sync.
 
 Another open TODO is that with a new documentChain event it's required to create a new snapshot. This is to avoid that content and access via page share links get out of sync.
-
-Another open TODO is that the documentTitleData (ciphertext, nonce, KeyDerivationTrace) should be part of the publicData (AAD) of a Snapshot.

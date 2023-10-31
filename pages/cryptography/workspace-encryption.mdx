@@ -56,7 +56,7 @@ When a user logs in, all workspace keys are retrieved and decrypted for the acti
 
 ```ts
 workspaceKey = asymmetric_decrypt(
-  workspaceKey,
+  boxCiphertext,
   nonce,
   senderDeviceEncryptionPublicKey,
   receiverDeviceEncryptionPrivateKey
