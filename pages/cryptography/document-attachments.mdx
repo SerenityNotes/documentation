@@ -60,4 +60,10 @@ https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/fil
 
 Usually when copying an image inside the editor the image is serialized to an `img` tag with various attributes. In our case this would include the actual `key` to decrypt the image. Since this would be a potential security risk the key is only stored in memory referenced by a `fileId` and not serialized to the `img` tag. The `fileId` is then serialized to the `img` tag. When pasting the image the `fileId` is used to retrieve the key from memory and store the `key` in the document.
 
-Code can be found in this editor extension: https://github.com/serenity-kit/Serenity/tree/main/packages/editor-file-extension
+In these places the key is removed from the HTML that is copied to the clipboard:
+https://github.com/serenity-kit/Serenity/blob/main/packages/editor-file-extension/src/fileNodeExtension.ts#L149-L151
+https://github.com/serenity-kit/Serenity/blob/main/packages/editor-file-extension/src/fileNodeExtension.ts#L164-L166
+
+When pasted again somewhere else in the same editor the key is added again and it's not necessary to upload the file again:
+https://github.com/serenity-kit/Serenity/blob/main/packages/editor-file-extension/src/fileNodeExtension.ts#L98
+https://github.com/serenity-kit/Serenity/blob/main/packages/editor-file-extension/src/fileNodeExtension.ts#L123

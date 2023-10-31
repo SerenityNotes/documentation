@@ -74,7 +74,7 @@ Note: The libsodium documention states that the context is a 8 character string.
 
 The content to ge signed should always be encrypted as strings
 
-The reason here is that signatures often include other data as well end it's easier to stay consistent and always use strings. In addition every string must be prefixed with the domain context to make sure signatures can't be misused for other use-cases.
+The reason here is that signatures often include other data as well end it's easier to stay consistent and always use strings. In addition every string must be prefixed with the domain context to make sure signatures can't be misused in other places.
 
 ### Signature Domain Context
 
@@ -96,8 +96,8 @@ The reason here is that signatures often include other data as well end it's eas
 
 There is a clear separation between the server and client code to ensure a compromised server can't trick a client in breaking the security model.
 
-- Server code is deployed on fly.io (API Service)
-- Client code is a static build and deployed on Netlify
+- Server code is deployed on fly.io (API Service) https://serenityapi.app
+- Client code is a static build and deployed on Netlify https://www.serenityapp.page
 
 This is especially important for the Opaque protocol. When the API service is compromised, clients using high-entropy passwords remain secure, thanks to Argon2 running on the client side. However, if a weak password is employed and the API service is breached or the database is leaked, an attacker can relatively effortlessly target the export-key by executing the protocol using the correct server values for a specific registration record.
 

@@ -7,7 +7,7 @@ The following information should be stored in there:
 - unencrypted content (folder names, document titles, document names)
 - chain events (workspace-chains, user-chains, document-chains)
 
-Therefor an encrypted SQLite database is used. Specifically https://github.com/sqlcipher/sqlcipher which is encrypted with one master key.
+Therefor an encrypted SQLite database is used. Specifically https://github.com/sqlcipher/sqlcipher which is encrypted with one master key. The master key is stored in a secure storage supported by a Secure Element. If no such storage is available no data is stored locally.
 
 ## Desktop clients
 
