@@ -79,20 +79,16 @@ Since the chain is public all the meta data about who has access to the group an
 - `add-member`
 
   - Members can only add another member if they have the permission `canAddMember`. A member can not add another member as admin.
-  - Admins can add members and set the permissions `canAddMember` and `canRemoveMember`. If an admin wants to add another member the event must be signed by >50% of the admins.
+  - Admins can add members and set the permissions `canAddMember` and `canRemoveMember`.
 
 - `remove-member`
 
   - Members can only remove another member if they have the permission `canAddMember`. A member can not remove another member as admin.
-  - Admins can add members and set the permissions `canAddMember` and `canRemoveMember`. If an admin wants to add another member the event must be signed by >50% of the admins.
+  - Admins can add members and set the permissions `canAddMember` and `canRemoveMember`.
 
 - `update-member`
 
-  - Only admins can update the authorization info `isAdmin`, `canAddMember` and `canRemoveMember` of other members. If an admin promote a member to an admin or demote an admin to a member the event must be signed by >50% of the admins.
-
-- `end-chain` TODO (not implemented yet)
-
-  - The purpose is to close the chain so no one else can attach more events to it. The event must be signed by >50% of the admins.
+  - Only admins can update the authorization info `isAdmin`, `canAddMember` and `canRemoveMember` of other members.
 
 ### EncryptedState Structure
 
@@ -149,5 +145,3 @@ const newState = applyEvent(state, event2); // throws errors
 
 - Exhaustive TS Matching
 - Functions should not mutate incoming parameters
-- Implement a state machine
-- Add functionality to sign multiple events in multiple orders and pick from the right one to prevent the known UX issue. It doesn't scale, but with a limit of 5 it probably covers lots of cases.
