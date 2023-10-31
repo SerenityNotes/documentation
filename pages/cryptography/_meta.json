@@ -12,6 +12,7 @@
   "document-encryption": "Document",
   "document-attachments": "Document Attachments",
   "document-comments": "Document Comments",
+  "workspace-integrity": "Workspace Integrity",
   "client-server": "Client Server (Authentication & Authorization)",
   "secure-client-storage": "Secure Client Storage",
   "miscellaneous": "Miscellaneous"

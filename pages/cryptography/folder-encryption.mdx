@@ -94,3 +94,4 @@ folderName = decryptAead(ciphertext, {}, nonce, folderKey);
 - The AD when encrypting/decrypting a folder name should probably include the workspaceId and the folderId to bind the result to a specific workspace and folder.
 - The key derivation trace probably should also be included in the AD.
 - Should there be a folder chain or a merkel tree to make sure the server either hides all or none subfolders/documents?
+- TODO Probably makes sense to includes the document chain hash in the `createDocumentHash`
