@@ -7,7 +7,7 @@
   "workspace-chain": "Workspace Chain (Membership & Roles)",
   "workspace-invitation": "Workspace Invitation",
   "workspace-encryption": "Workspace Key (Encryption)",
-  "folder-encryption": "Folder",
+  "folder-encryption": "Folder (Encryption & Integrity)",
   "document-chain": "Document Chain (Share Links)",
   "document-encryption": "Document",
   "document-attachments": "Document Attachments",
