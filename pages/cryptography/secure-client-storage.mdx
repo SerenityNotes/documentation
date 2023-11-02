@@ -27,9 +27,14 @@ Code reference: https://github.com/serenity-kit/Serenity/blob/main/apps/app/util
 
 ### Web
 
-Since in a web client no secure storage available, it's not planned to store data locally. Possibly hashes of the chains (e.g. workspace-chain) could be stored, but this has not yet been decided.
+Since in a web client no secure storage available and therefor no content is persistet on the client. Possibly hashes of the chains (e.g. workspace-chain) could be stored, but this is not implemented and no decision in favor of it has been made.
 
-The browser's LocalStorage is used to store a device private keys and sessionKey. This is not as secure as other storage options, but it's the only option available. To reduce the risk an expiration data is set.
+Also device private keys are not stored locally. The only data that is stored locally is the sessionKey, webDeviceAccessToken and a webDeviceKey. The webDeviceKey is used to encrypt the web device (incl. private signing and encryption key) and stored on the server when adding the device to the account.
+
+When a user open the application the webDeviceAccessToken is used to fetch the encrypted device and decrypt it with the webDeviceKey. The decrypted device is then stored only in memory and will be gone after closing the browser tab.
+
+This design was chosen to ensure that a revoked or expired web device can't be extracted from a compromised browser since the server rejects returning the device ciphertext and nonce.
+The design that was rejected was to store the device private keys directly in the browser's LocalStorage. This would have been possible, but would have meant that a compromised browser could have extracted the device private keys.
 
 Code reference: https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/device/webDeviceStore.ts
 

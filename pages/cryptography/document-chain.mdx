@@ -136,23 +136,23 @@ The purpose of a document share device is to create a share link that allows ext
 deviceSigningKeyPair = signingKeyPairGen();
 deviceEncryptionKeyPair = encryptionKeyPairGen();
 deviceEncryptionPublicKeySignature = sign(
-  "share_document_device_encryption_public_key" +
-    deviceEncryptionKeyPair.publicKey,
-  deviceSigningKeyPair.privateKey
+"share_document_device_encryption_public_key" +
+  deviceEncryptionKeyPair.publicKey,
+deviceSigningKeyPair.privateKey
 );
 // encrypt device
 shareLinkDeviceKey = secretboxKeygen();
 nonce = noncegen();
 shareLinkDeviceCiphertext = encrypt(
-  {
-    deviceSigningKeyPair.publicKey,
-    deviceSigningKeyPair.privateKey,
-    deviceEncryptionKeyPair.publicKey,
-    deviceEncryptionKeyPair.privateKey,
-    deviceEncryptionPublicKeySignature,
-  },
-  nonce,
-  shareLinkDeviceKey
+{
+  deviceSigningKeyPair.publicKey,
+  deviceSigningKeyPair.privateKey,
+  deviceEncryptionKeyPair.publicKey,
+  deviceEncryptionKeyPair.privateKey,
+  deviceEncryptionPublicKeySignature,
+},
+nonce,
+shareLinkDeviceKey
 );
 ```
 

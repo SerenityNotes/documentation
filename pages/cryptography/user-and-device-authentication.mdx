@@ -5,17 +5,20 @@
 - opaque_login: OPAQUE login flow
 - userChainAddDevice: see user-chain
 - kdf: `sodium.crypto_kdf_derive_from_key(crypto_aead_xchacha20poly1305_ietf_KEYBYTES, subkeyId, context, key)`
-- decrypt: `sodium.crypto_secretbox_opne_easy(ciphertext, nonce, key)`
 - signingKeyPairGen: `sodium.crypto_sign_keypair()`
 - encryptionKeyPairGen: `sodium.crypto_box_keypair()`
 - sign: `sodium.crypto_sign_detached(message, privateKey)`
+- noncegen: `sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES)`
+- secretboxKeygen: `sodium.crypto_secretbox_keygen()`
+- encrypt: `sodium.crypto_secretbox_easy(message, nonce, key)`
+- decrypt: `sodium.crypto_secretbox_opne_easy(ciphertext, nonce, key)`
 
 ## Login
 
 Using the OPAQUE protocol to authenticate the client with the server the MainDevice can be recovered. With the MainDevice the client automatically add the current client as new device to the user-chain. All workspace keys are decrypted and in case of a long-term session the workspace key boxes for the new device are created.
 
 ```ts
-exportKey = opaque_login()
+exportKey, sessionKey = opaque_login()
 encryptionKey = kdf(1111, "m_device", exportKey);
 mainDevice = decrypt(
   ciphertext,
@@ -39,7 +42,21 @@ deviceEncryptionPublicKeySignature = sign(
 );
 expiredAt = determineExpiredAt(); // undefined if permanent device (mobile), 30 days for long web session, 24h for short web session
 userChainAddDeviceEvent = userChainAddDevice(mainDevice, deviceSigningKeyPair.publicKey, deviceEncryptionKeyPair.publicKey, deviceEncryptionPublicKeySignature, expiredAt);
-sessionTokenSignature = sign(sessionToken, deviceSigningKeyPair.privateKey);
+sessionTokenSignature = sign("login_session_key" + sessionKey, deviceSigningKeyPair.privateKey);
+// additional steps only done for web devices
+webDeviceKey = secretboxKeygen();
+webDeviceNonce = noncegen();
+webDeviceCiphertext = encrypt(
+  {
+    deviceSigningKeyPair.publicKey,
+    deviceSigningKeyPair.privateKey,
+    deviceEncryptionKeyPair.publicKey,
+    deviceEncryptionKeyPair.privateKey,
+    deviceEncryptionPublicKeySignature,
+  },
+  webDeviceNonce,
+  webDeviceKey
+);
 ```
 
 opaque_login
@@ -65,3 +82,30 @@ https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/login/Log
 https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/workspace/attachDeviceToWorkspaces.ts
 
 The exact process is documented in the section `Workspace Encryption` und `Adding a new device to the workspace and creating the corresponding encryption box on a login`.
+
+### Data stored
+
+On mobile and desktop with access to a secure storage the `sessionKey` and device private keys are stored in the secure storage.
+
+On web devices without access to a secure storage the `sessionKey`, `webDeviceKey` and `webAccessToken` is stored in localstorage.
+
+The `mainDevice` is only stored in memory regardless of the environment.
+
+More details on storage can be found in [Secure Client Storage](./secure-client-storage).
+
+## Recovering a web device
+
+When a user opens the browser and still has a valid (non-expired and non-revoked session) then the client uses the stored `webAccessToken` to retrieve the encrypted webDevice (ciphertext & nonce) from the backend. The client then decrypts the webDevice and stores the decrypted webDevice in memory.
+
+```ts
+webDevice = decrypt(webDeviceCiphertext, webDeviceNonce, webDeviceKey);
+```
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/device/webDeviceStore.ts#L32-L44
+
+## Active Session Authentication
+
+The `sessionKey` is sent along as `Authorization` header. Based on that the backend can identify the user.
+
+Client code: https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/urqlClient/urqlClient.ts#L103
+Server code: https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/createServer.ts#L39-L70
