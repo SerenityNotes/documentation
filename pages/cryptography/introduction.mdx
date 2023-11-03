@@ -12,7 +12,7 @@ Server: Is a centralized service that is responsible for storing and exchanging 
 
 The main objective of the whole project is to create a system where the server can never access the content or name of a folder or document. The assumes that the code the client is executing is not compromised.
 
-The server has a lot of meta-data. The aim is to minimize the amount of meta-data in the future, but ideally keep all the verifications in place using zero-knowledge proofs.
+The server has a lot of meta-data. The aim is to minimize the amount of meta-data in the future, but ideally keep all the verifications in place. We hope zero-knowledge proofs will help us to achieve this, but this is unexplored territory for our team.
 
 Clients must trust other verified clients with the encryption. A malicious client can leak data or in worst case create malicious data that could prevent other clients from decrypting the content.
 
@@ -34,7 +34,15 @@ What can't be prevented is that the server will hide data from a user. A server 
     - Verifying signatures
     - Ensuring that all signature chains (user, workspace and document) are in the correct order and no forks are created.
 
-## Keys encryption
+## Signature chains
+
+A lot of the security of the system is based on signature chains. The idea is that critical changes e.g. adding or removing a member from a workspace is recorded as an transaction, then hashed and signed.
+
+Such an event is sent and stored on the server. The server is responsible to keep ensure a single chain is created and no forks are created.
+
+The benefit of this design is that the hash can be referenced in other data structures or stored locally and be used to verify that the server is not hiding data or sending old data. While it's not possible to prevent forks by the server it highly discourages due client side verification.
+
+## Keys encryption strategy
 
 Keys should be encrypted as Uint8Array
 
@@ -45,6 +53,12 @@ sodium.crypto_box_easy(workspaceKey, nonce, publicKey, privateKey);
 ```
 
 In the case above the workspaceKey must be a `Uint8Array`.
+
+## Signature strategy
+
+The content to get signed should always be a string.
+
+The reason here is that signatures often include other data as well end it's easier to stay consistent and always use strings. In addition every string must be prefixed with the domain context to make sure signatures can't be misused in other places.
 
 ### Key Separation
 
@@ -69,12 +83,6 @@ Each key that is derived using a KDF has a context set depending on the purpose 
 - `comment_` - document comment encryption key
 
 Note: The libsodium documention states that the context is a 8 character string. This is currently not enforced by libsodium.js. See [https://github.com/jedisct1/libsodium.js/issues/322](https://github.com/jedisct1/libsodium.js/issues/322).
-
-## Signatures
-
-The content to ge signed should always be encrypted as strings
-
-The reason here is that signatures often include other data as well end it's easier to stay consistent and always use strings. In addition every string must be prefixed with the domain context to make sure signatures can't be misused in other places.
 
 ### Signature Domain Context
 
