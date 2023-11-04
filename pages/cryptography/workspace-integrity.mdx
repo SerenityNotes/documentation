@@ -34,7 +34,7 @@ userChainHashes: record<userId, lastUserChainEventHash>;
 workspaceIntegrityDataString = canonicalize(workspaceIntegrityData);
 workspaceIntegrityHash = hash(workspaceIntegrityDataString);
 workspaceIntegrityHashSignature = sign(
-  "workspace_integrity_proof" + workspaceIntegrityHash,
+  concat("workspace_integrity_proof", workspaceIntegrityHash),
   deviceSigningPrivateKey
 );
 ```
@@ -49,7 +49,7 @@ workspaceIntegrityHash = hash(workspaceIntegrityDataString);
 assert(workspaceIntegrityHash === existingWorkspaceIntegrityHash);
 signVerify(
   workspaceIntegrityHashSignature,
-  workspaceIntegrityHash,
+  concat("workspace_integrity_proof", workspaceIntegrityHash),
   authorDeviceSigningPublicKey
 );
 ```

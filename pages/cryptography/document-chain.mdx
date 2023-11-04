@@ -67,14 +67,18 @@ transaction = {
   …
 }
 transactionHash = hash(canonicalize(transaction));
-signature = sign(transactionHash, privateKey);
+signature = sign(concat("document_chain", transactionHash), privateKey);
 ```
 
 ## Cryptographic validation for all chain events
 
 ```ts
 transactionHash = hash(canonicalize(transaction));
-signVerify(author.signature, transactionHash, author.publicKey);
+signVerify(
+  author.signature,
+  concat("document_chain", transactionHash),
+  author.publicKey
+);
 ```
 
 This allows to validate:
@@ -106,7 +110,15 @@ https://github.com/serenity-kit/Serenity/blob/main/packages/document-chain/src/c
 
 Validations:
 
-- has a signingPublicKey, encryptionPublicKey and valid encryptionPublicKeySignature for the main device `signVerify(encryptionPublicKeySignature, encryptionPublicKey, signingPublicKey)`
+- has a signingPublicKey, encryptionPublicKey and valid encryptionPublicKeySignature for the main device
+
+```ts
+signVerify(
+  encryptionPublicKeySignature,
+  concat("share_document_device_encryption_public_key", encryptionPublicKey),
+  signingPublicKey
+);
+```
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/document-chain/src/applyCreateDocumentChainEvent.ts
 
@@ -121,7 +133,15 @@ https://github.com/serenity-kit/Serenity/blob/main/packages/document-chain/src/a
 Validations:
 
 - the device does not exist in the state derived until the event
-- has a signingPublicKey, encryptionPublicKey and valid encryptionPublicKeySignature `signVerify(encryptionPublicKeySignature, encryptionPublicKey, signingPublicKey)`
+- has a signingPublicKey, encryptionPublicKey and valid encryptionPublicKeySignature
+
+```ts
+signVerify(
+  encryptionPublicKeySignature,
+  concat("share_document_device_encryption_public_key", encryptionPublicKey),
+  signingPublicKey
+);
+```
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/document-chain/src/applyEvent.ts#L62-L79
 
@@ -136,9 +156,8 @@ The purpose of a document share device is to create a share link that allows ext
 deviceSigningKeyPair = signingKeyPairGen();
 deviceEncryptionKeyPair = encryptionKeyPairGen();
 deviceEncryptionPublicKeySignature = sign(
-"share_document_device_encryption_public_key" +
-  deviceEncryptionKeyPair.publicKey,
-deviceSigningKeyPair.privateKey
+  concat("share_document_device_encryption_public_key", deviceEncryptionKeyPair.publicKey),
+  deviceSigningKeyPair.privateKey
 );
 // encrypt device
 shareLinkDeviceKey = secretboxKeygen();

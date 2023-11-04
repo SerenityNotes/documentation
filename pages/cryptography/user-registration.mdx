@@ -30,7 +30,10 @@ nonce = noncegen();
 deviceSigningKeyPair = signingKeyPairGen();
 deviceEncryptionKeyPair = encryptionKeyPairGen();
 deviceEncryptionPublicKeySignature = sign(
-  "user_device_encryption_public_key" + deviceEncryptionKeyPair.publicKey,
+  concat(
+    "user_device_encryption_public_key",
+    deviceEncryptionKeyPair.publicKey
+  ),
   deviceSigningKeyPair.privateKey
 );
 ciphertext = encrypt(

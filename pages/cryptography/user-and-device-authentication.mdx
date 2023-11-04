@@ -37,12 +37,12 @@ mainDevice = decrypt(
 deviceSigningKeyPair = signingKeyPairGen();
 deviceEncryptionKeyPair = encryptionKeyPairGen();
 deviceEncryptionPublicKeySignature = sign(
-  "user_device_encryption_public_key" + deviceEncryptionKeyPair.publicKey,
+  concat("user_device_encryption_public_key", deviceEncryptionKeyPair.publicKey),
   deviceSigningKeyPair.privateKey
 );
 expiredAt = determineExpiredAt(); // undefined if permanent device (mobile), 30 days for long web session, 24h for short web session
 userChainAddDeviceEvent = userChainAddDevice(mainDevice, deviceSigningKeyPair.publicKey, deviceEncryptionKeyPair.publicKey, deviceEncryptionPublicKeySignature, expiredAt);
-sessionTokenSignature = sign("login_session_key" + sessionKey, deviceSigningKeyPair.privateKey);
+sessionTokenSignature = sign(concat("login_session_key", sessionKey), deviceSigningKeyPair.privateKey);
 // additional steps only done for web devices
 webDeviceKey = secretboxKeygen();
 webDeviceNonce = noncegen();

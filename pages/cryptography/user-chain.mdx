@@ -70,14 +70,18 @@ transaction = {
   …
 }
 transactionHash = hash(canonicalize(transaction));
-signature = sign(transactionHash, privateKey);
+signature = sign(concat("user_chain", transactionHash), privateKey);
 ```
 
 ## Cryptographic validation for all chain events
 
 ```ts
 transactionHash = hash(canonicalize(transaction));
-signVerify(author.signature, transactionHash, author.publicKey);
+signVerify(
+  author.signature,
+  concat("user_chain", transactionHash),
+  author.publicKey
+);
 ```
 
 This allows to validate:
@@ -95,6 +99,10 @@ For the createChain event the prevEventHash is null. For all other events it mus
 ### Create chain
 
 ```ts
+encryptionPublicKeySignature = sign(
+  concat("user_device_encryption_public_key", encryptionPublicKey),
+  signingPrivateKey
+);
 transaction = {
   type: "create",
   id: generateId(),
@@ -112,7 +120,15 @@ https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/creat
 
 Validations:
 
-- has a signingPublicKey, encryptionPublicKey and valid encryptionPublicKeySignature for the main device `signVerify(encryptionPublicKeySignature, encryptionPublicKey, signingPublicKey)`
+- has a signingPublicKey, encryptionPublicKey and valid encryptionPublicKeySignature for the main device
+
+```ts
+signVerify(
+  encryptionPublicKeySignature,
+  concat("user_device_encryption_public_key", encryptionPublicKey),
+  signingPublicKey
+);
+```
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/applyCreateUserChainEvent.ts
 
@@ -129,7 +145,10 @@ deviceSigningContent = canonicalize(
   userDeviceSigningKeyProofDomainContext,
   prevEventHash
 );
-deviceSigningKeyProof = sign(deviceSigningContent, deviceSigningPrivateKey);
+deviceSigningKeyProof = sign(
+  concat("user_device_signing_key_proof", deviceSigningContent),
+  deviceSigningPrivateKey
+);
 ```
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/addDevice.ts
@@ -137,8 +156,25 @@ https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/addDe
 Validations:
 
 - the device does not exist in the state derived until the event
-- has a signingPublicKey, encryptionPublicKey and valid encryptionPublicKeySignature `signVerify(encryptionPublicKeySignature, encryptionPublicKey, signingPublicKey)`
-- deviceSigningKeyProof is valid `signVerify(deviceSigningKeyProof, deviceSigningContent, deviceSigningPublicKey)`
+- has a signingPublicKey, encryptionPublicKey and valid encryptionPublicKeySignature
+
+```ts
+signVerify(
+  encryptionPublicKeySignature,
+  concat("user_device_encryption_public_key", encryptionPublicKey),
+  signingPublicKey
+);
+```
+
+- deviceSigningKeyProof is valid
+
+```ts
+signVerify(
+  deviceSigningKeyProof,
+  concat("user_device_signing_key_proof", deviceSigningContent),
+  deviceSigningPublicKey
+);
+```
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/applyEvent.ts#L53-L69
 
