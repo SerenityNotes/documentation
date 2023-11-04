@@ -117,3 +117,11 @@ The highest score (4 - very unguessable: strong protection from offline slow-has
 With a weak password a compromised server could brute-force the `exportKey` and decrypt the user's data. This would break the end-to-end encryption.
 
 Brute-forcing would work by running the OPAQUE login flow again and again using a different password. An attacker would need the registration record and the opaque serverSetup containing the OPRF seed and server private key.
+
+## Opaque Server Public Key Verification
+
+In order to make sure the user is talking to the correct opaque server the server's public key is verified.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/register/RegisterForm.tsx#L129-L131
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/getOpaqueServerPublicKey/getOpaqueServerPublicKey.ts

@@ -109,3 +109,15 @@ The `sessionKey` is sent along as `Authorization` header. Based on that the back
 
 Client code: https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/urqlClient/urqlClient.ts#L103
 Server code: https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/createServer.ts#L39-L70
+
+## Opaque Server Public Key Verification
+
+In order to make sure the user is talking to the correct opaque server the server's public key is verified.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/loginHelper.ts#L91-L93
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/getOpaqueServerPublicKey/getOpaqueServerPublicKey.ts
+
+In addition also used when retrieving the main device in the password verification.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/verifyPasswordModal/VerifyPasswordModal.tsx
