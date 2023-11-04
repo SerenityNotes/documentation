@@ -114,16 +114,24 @@ When a device is removed by a user from their device list in the UI, a new works
 
 NOTE: This interaction is problematic since any user can rotate a workspace key (currently also with the role VIEWER or COMMENTER). The benefit is that everyone can force any new encryption to be done with a new workspace key. The downside is that this can be used to create an error state for specific users or even specific devices of a user by creating broken encrypted workspace keys boxes.
 
-TODO two options?
-
-- limited to Admins of the workspace only. Any other user should make a request to an admin to rotate the workspace key and admins query for them and add users
-- some form of error handling informing the user of a broken state and requesting to invalidate this workspace key?
-
 https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/accountDevicesSettingsScreen/AccountDevicesSettingsScreen.tsx#L107-L120
 
 https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/workspace/rotateWorkspaceKey.ts
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/encryptWorkspaceKeyForDevice/encryptWorkspaceKeyForDevice.ts
+
+### Future implementation
+
+Before shipping Serenity to customers the following architecture will be implemented:
+
+In the user interface the user has two options how to remove a device:
+
+- remove device
+- report device as compromised
+
+When the user removes a device the workspace continues to work.
+
+When the user reports a device as compromised the workspace is locked down and no further reads or writes can be done until a workspace admin comes online and a workspace key roation is invoked.
 
 ## Encrypting workspace info (name)
 
