@@ -66,14 +66,19 @@ The reason here is that signatures often include other data as well end it's eas
 
 ### Key Separation
 
-Two symmetric enryption keys are encrypted using asymmetric encryption (secret_box). Specifically:
+Two symmetric enryption keys are encrypted using asymmetric encryption (box). Specifically:
 
 - Workspace key
-- Share document device Key (used for sharing documents via a link)
+- SnapshotKey (only used for decrypting a snapshot when using a documents via a link)
 
-In order to make sure these keys are not mistaken with each other they are prefixed with a context byte (0x01 for workspace and 0x02 for share document).
+In order to make sure these keys are not mistaken with each other they are prefixed with a context byte (0x00 for workspace and 0x01 for share document).
 
-TODO Note this is yet not implemented
+This byte is followed by another byte 0x00 indicating the version. This is to make sure that in the future the encryption can be changed and newer systems can still decrypt older data.
+
+Depending on the key type more data is added:
+
+- For the workspace key encryption the `workspaceId` and `workspaceKeyId` is included an checked upon decryption.
+- For the snapshot key encryption the `documentId` and the `snapshotId` is included an checked upon decryption.
 
 ## Keys encryption convention
 

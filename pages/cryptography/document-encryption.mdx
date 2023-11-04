@@ -120,16 +120,25 @@ In addition to make sure the content can be decrypted by a document share link a
 ```ts
 // for each active document share link of the document (determined by the document chain)
 nonce = generateBoxNonce();
+snapshotKeyEncryptionContext = 1;
+snapshotKeyEncryptionVersion = 0;
 boxCiphertext = asymmetric_encrypt(
-  snapshotKey,
+  concat(
+    snapshotKeyEncryptionContext,
+    snapshotKeyEncryptionVersion,
+    documentId,
+    snapshotId,
+    snapshotKey
+  ),
   nonce,
   shareLinkDevicePublicKey,
   senderDeviceEncryptionPrivateKey
 );
 ```
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L166-L183
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/document/createDocumentShareLinkDeviceBox.ts
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L170-L189
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/encryptSnapshotKeyForShareLinkDevice/encryptSnapshotKeyForShareLinkDevice.ts
 
 ### Derivation of a Snapshot Key to decrypt a Snapshot
 
@@ -144,15 +153,22 @@ https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/recreateS
 ### Decrypting a Snapshot key with a document share link
 
 ```ts
-workspaceKey = asymmetric_decrypt(
+content = asymmetric_decrypt(
   boxCiphertext,
   nonce,
   senderDeviceEncryptionPublicKey,
   shareLinkDevicePrivateKey
 );
+assert(content[0] === 1); // check for snapshot key encryption
+assert(content[1] === 0); // check for snapshot key ecryption version
+assert(content[2...26] === documentId); // check for document id
+assert(content[27...51] === snapshotId); // check for snapshot id
+snapshotKey = content[52...131];
 ```
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/sharePage/SharePage.tsx#L95C6-L107
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/sharePage/SharePage.tsx#L97-L113
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/decryptSnapshotKey/decryptSnapshotKey.ts
 
 ### Validating collaborators
 

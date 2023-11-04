@@ -32,12 +32,20 @@ Keys (except document attachment keys) to encrypt workspace data are derived fro
 When a workspace is created, a new workspace key is generated and encrypted for each device of each member of the workspace.
 
 ```ts
+workspaceKeyEncryptionContext = 0;
+workspaceKeyEncryptionVersion = 0;
 workspaceKeyId = generate_id();
 workspaceKey = keygen();
 // for each active device of each user (determined by the workspace chain)
 nonce = noncegen();
 boxCiphertext = asymmetric_encrypt(
-  workspaceKey,
+  contact(
+    workspaceKeyEncryptionContext,
+    workspaceKeyEncryptionVersion,
+    workspaceId,
+    workspaceKeyId,
+    workspaceKey
+  ),
   nonce,
   receiverDeviceEncryptionPublicKey,
   senderDeviceEncryptionPrivateKey
@@ -55,12 +63,17 @@ The workspace key is stored in the backend and set as the active workspace key.
 When a user logs in, all workspace keys are retrieved and decrypted for the active device.
 
 ```ts
-workspaceKey = asymmetric_decrypt(
+content = asymmetric_decrypt(
   boxCiphertext,
   nonce,
   senderDeviceEncryptionPublicKey,
   receiverDeviceEncryptionPrivateKey
 );
+assert(content[0] === 0); // check for workspace key encryption
+assert(content[1] === 0); // check for workspace key ecryption version
+assert(content[2...26] === workspaceId); // check for workspace id
+assert(content[27...51] === workspaceKeyId); // check for workspace key id
+workspaceKey = content[52...131];
 ```
 
 Workspace keys are fetched on demand e.g. in the Sidebar:
