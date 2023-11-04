@@ -1,4 +1,4 @@
-## Registration Process
+# Registration Process
 
 ![Registration flow](./registration_flow.png)
 Note: best to open in a separate tab
@@ -20,7 +20,7 @@ Note: best to open in a separate tab
 - encrypt: `sodium.crypto_secretbox_easy(message, nonce, key)`
 - createUserChain: see user-chain
 
-### Steps without workspace invitation
+## Steps without workspace invitation
 
 ```ts
 exportKey = opaque_registration();
@@ -68,7 +68,7 @@ The server stores this information in the database in the `UnverifiedUser` table
 
 On the client side the `username`, `password` and `createChainEvent` are stored in memory.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/register/RegisterForm.tsx#L166C11-L170
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/register/RegisterForm.tsx#L169-L176
 
 https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/registrationMemoryStore.ts
 
@@ -81,7 +81,7 @@ From here on there are two different paths depending on if the user:
 1. Enters the code into the current session (with the `username`, `password` and `createChainEvent` stored in memory)
 2. Open the link from the email directly.
 
-#### Flow 1
+### Flow 1
 
 The user enters the verification code and submits the form. The server checks the code and if it is valid, it creates a new `User` record in the database and the user finished the registration process. The `verifyRegistration` mutation only requires the username and the verification code. There are some concerns if this could be abused, but no valid use-case was found so far.
 
@@ -95,10 +95,25 @@ https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/r
 
 The user is done in this case and redirected to onboarding.
 
-#### Flow 2
+### Flow 2
 
 In case the user open the email link the username and verification code are part of the query parameters and the user lands on the RegistrationVerificationScreen. The `verifyRegistration` mutation can be triggered and since on the server only the username and the verification code are required this can be done without being logged in. There are some concerns if this could be abused, but no valid use-case was found so far.
 
 https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/authentication/finalizeRegistration.ts#L123-L134
 
 The user is sent to the login page where the password from before has to be entered. This triggeres the login process as described in the user authentication section in the documentation.
+
+## Password Complexity
+
+In order to secure the `exportKey` from being brute-forced a certain level of password complexity is checked upon registration. The [https://github.com/zxcvbn-ts/zxcvbn](https://github.com/zxcvbn-ts/zxcvbn) project is used to determine the complexity. It is based on [Dropox's zxcvbn](https://github.com/dropbox/zxcvbn), written in Typescript, actively maintained and used by other projects e.g. [Clerk](https://clerk.com/docs/security/password-protection#password-strength).
+
+Configuration: https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/register/RegisterForm.tsx#L33-L42
+Evaluation: https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/register/RegisterForm.tsx#L265
+
+The highest score (4 - very unguessable: strong protection from offline slow-hash scenario. (guesses >= 10^10)) must be reached before a user can register: https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/register/RegisterForm.tsx#L102-L106
+
+### Why is this important?
+
+With a weak password a compromised server could brute-force the `exportKey` and decrypt the user's data. This would break the end-to-end encryption.
+
+Brute-forcing would work by running the OPAQUE login flow again and again using a different password. An attacker would need the registration record and the opaque serverSetup containing the OPRF seed and server private key.

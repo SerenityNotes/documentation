@@ -1,15 +1,5 @@
 # Miscellaneous
 
-## Password Complexity
-
-Currently the only requirement is that the password must be at least 6 characters long. This can result in weak passwords and opens up the possibility for admins with access to the database or an attacker gaining access to brute-force the password and extract the `exportKey` which would break the end-to-end encryption.
-
-Therefor an open TODO is to implement a password complexity check upon registration. The strongest condenter currently is:
-
-- https://zxcvbn-ts.github.io/zxcvbn/guide/getting-started/
-
-It's based on on [Dropox's zxcvbn](https://github.com/dropbox/zxcvbn), written in Typescript, actively maintained and used by other projects e.g. [Clerk](https://clerk.com/docs/security/password-protection#password-strength)
-
 ## OPAQUE
 
 One open TODO is to hard-code the server's public key into the client codebase and verify it during the registration and login process.

@@ -40,49 +40,13 @@ A lot of the security of the system is based on signature chains. The idea is th
 
 Such an event is sent and stored on the server. The server is responsible to keep ensure a single chain is created and no forks are created.
 
-The benefit of this design is that the hash can be referenced in other data structures or stored locally and be used to verify that the server is not hiding data or sending old data. While it's not possible to prevent forks by the server it highly discourages due client side verification.
+The benefit of this design is that the hash can be referenced in other data structures or stored locally and be used to verify that the server is not hiding data or sending old data. While it's not possible to prevent forks by the server, it discourages due client side verification.
 
-## Keys encryption strategy
+## Signing convention
 
-Keys should be encrypted as Uint8Array
-
-Example:
-
-```ts
-sodium.crypto_box_easy(workspaceKey, nonce, publicKey, privateKey);
-```
-
-In the case above the workspaceKey must be a `Uint8Array`.
-
-## Signature strategy
-
-The content to get signed should always be a string.
+The content to get signed must always be a string.
 
 The reason here is that signatures often include other data as well end it's easier to stay consistent and always use strings. In addition every string must be prefixed with the domain context to make sure signatures can't be misused in other places.
-
-### Key Separation
-
-Two symmetric enryption keys are encrypted using asymmetric encryption (secret_box). Specifically:
-
-- Workspace key
-- Share document device Key (used for sharing documents via a link)
-
-In order to make sure these keys are not mistaken with each other they are prefixed with a context byte (0x01 for workspace and 0x02 for share document).
-
-TODO Note this is yet not implemented
-
-### KDF Context
-
-Each key that is derived using a KDF has a context set depending on the purpose of the key:
-
-- `m_device` - mainDevice encryption key based on the exportKey
-- `wsinvite` - workspaceInvitation encryption key
-- `folder__` - folder encryption key
-- `snapshot` - document snapshot encryption key
-- `doctitle` - document title encryption key
-- `comment_` - document comment encryption key
-
-Note: The libsodium documention states that the context is a 8 character string. This is currently not enforced by libsodium.js. See [https://github.com/jedisct1/libsodium.js/issues/322](https://github.com/jedisct1/libsodium.js/issues/322).
 
 ### Signature Domain Context
 
@@ -99,6 +63,42 @@ Note: The libsodium documention states that the context is a 8 character string.
   - Share document device encryptionPublicKey: `share_document_device_encryption_public_key`
 - SessionToken signature: `login_session_key`
 - Folder ID signature: `folder_id`
+
+### Key Separation
+
+Two symmetric enryption keys are encrypted using asymmetric encryption (secret_box). Specifically:
+
+- Workspace key
+- Share document device Key (used for sharing documents via a link)
+
+In order to make sure these keys are not mistaken with each other they are prefixed with a context byte (0x01 for workspace and 0x02 for share document).
+
+TODO Note this is yet not implemented
+
+## Keys encryption convention
+
+The keys to be encrypted must be a Uint8Array.
+
+Example:
+
+```ts
+sodium.crypto_box_easy(workspaceKey, nonce, publicKey, privateKey);
+```
+
+In the case above the workspaceKey must be a `Uint8Array`.
+
+### KDF Context
+
+Each key that is derived using a KDF has a context set depending on the purpose of the key:
+
+- `m_device` - mainDevice encryption key based on the exportKey
+- `wsinvite` - workspaceInvitation encryption key
+- `folder__` - folder encryption key
+- `snapshot` - document snapshot encryption key
+- `doctitle` - document title encryption key
+- `comment_` - document comment encryption key
+
+Note: The libsodium documention states that the context is a 8 character string. This is currently not enforced by libsodium.js. See [https://github.com/jedisct1/libsodium.js/issues/322](https://github.com/jedisct1/libsodium.js/issues/322).
 
 ## Code separation
 

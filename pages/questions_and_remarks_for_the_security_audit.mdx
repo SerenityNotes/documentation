@@ -4,13 +4,9 @@
 
 These are the main goals of the security audit:
 
-1. Verify that the server can never see content (content text, images, comment text etc.) of documents or folder names. In order words. This assumes that the client is not compromised. This includes that the server can never just inject an entry into a response and this results forcing a client to encrypt content for the server nor sign content for the server to get access e.g. a workspace chain.
+1. Verify that the server can never see content (content text, images, comment text etc.) of documents or folder names. In order words. This assumes that the client is not compromised. This includes that the server can never just inject an entry into a response resulting in a client to encrypt or sign content for the server to get access to data.
 
 2. Verify that the backend service is not vulnerable to common attacks like SQL injection or the Websocket connection can be compromised.
-
-## Secondary Goals (if time and budget allows)
-
-1. Verify that the checks and verifications to keep the server honest can't be compromised. One example is that the server wants to withhold specific updates on a document from a client. For the server it should only be possible to withhold all or none.
 
 ## Repositories
 
