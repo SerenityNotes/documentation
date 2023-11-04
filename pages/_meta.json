@@ -1,6 +1,7 @@
 {
   "index": "Overview",
   "user": "User",
+  "questions_and_remarks_for_the_security_audit": "Questions and remarks for the security audit",
   "cryptography": "Cryptography",
   "archive": "Archive"
 }

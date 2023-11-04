@@ -44,33 +44,3 @@ https://github.com/SerenityNotes/Serenity/blob/main/packages/common/src/createDe
 ### Encryption Key Pair
 
 For the encryption key pair, we use the `X25519` algorithm which is generated using Libsodium's `crypto_box_keypair()`. The public key is then signed with the signature key pair using Libsodium's `crypto_sign_detached()`.
-
-## Storing private keys
-
-Ideally we would use a secure storage like the `Secure Enclave` on iOS or the `KeyStore` on Android. However, this is not possible in a web browser and therefor certain compromises had been made. We hope in the future access to Secure Element will be available in the browser. See https://globalplatform.github.io/WebApis-for-SE/doc/
-
-### iOS and Android
-
-The `expo-secure-store` package is used to store a `Device` using Keychain on iOS and KeyStore on Android. Both leverage a Secure Element to keep the data secure.
-
-Code reference: https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/device/deviceStore.ts
-
-### Web
-
-The browser's LocalStorage is used to store a `Device`.
-
-When logging in through the web-interface there is checkbox to choose whether the user should be logged in for 30 days. If the user chooses to be logged in for 30 days, the `Device` is stored in `LocalStorage`.
-
-**Note**: This is only partially implemented. Specifically the 30 day limitation is not verified anywhere yet.
-
-Code reference: https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/device/webDeviceStore.ts
-
-### Desktop
-
-**Note**: This is not implemented yet.
-
-We plan to use Apple's `Keychain` on macOS and `Secret Service` on Linux and `Windows Credential Manager` on Windows.
-
-## User Chain
-
-In order to verify that a `Device` belongs to a certain user each user has a `user-chain`. It is a chain of events (add or remove device) each signed with the main device and the previous event from which a finite set of active device can be derived.
