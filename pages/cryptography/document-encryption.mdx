@@ -180,8 +180,6 @@ https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/findVerifiedUs
 
 Currently this doesn't include already removed devices or devices from removed members. These can also be valid, but therefor the implementation needs to be refined and snapshots need to include in their public data a reference to a workspace chain event as well as the user chain events for all members.
 
-Whenever a member or a device of a member is removed a new snapshot we new references should be created. This is an open TODO.
-
 ## Document Title
 
 The document title shows up in the sidebar and to efficiently list the documents in a folder the document title can be decrypted independently from the document content. That said the document title key always references the latest snapshot key. This whenever a new snapshot key is created a new document title key is created as well and the document title re-encrypted.
@@ -215,9 +213,3 @@ https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/decryptDo
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/decryptDocumentTitle/decryptDocumentTitle.ts
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/recreateDocumentTitleKey/recreateDocumentTitleKey.ts
-
-## Not implemented yet
-
-One open TODO is that each snapshot must reference a document chain state. This is to avoid that content and access via page share links get out of sync.
-
-Another open TODO is that with a new documentChain event it's required to create a new snapshot. This is to avoid that content and access via page share links get out of sync.
