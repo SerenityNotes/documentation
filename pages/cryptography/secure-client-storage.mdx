@@ -1,31 +1,60 @@
 # Secure Client Storage
 
-The following information should be stored in there:
+The following information should be stored locally if possible:
 
 - device private keys (signing and encryption)
 - sessionKey (OPAQUE)
 - unencrypted content (folder names, document titles, document names)
 - chain events (workspace-chains, user-chains, document-chains)
 
-Therefor an encrypted SQLite database is used. Specifically https://github.com/sqlcipher/sqlcipher which is encrypted with one master key. The master key is stored in a secure storage supported by a Secure Element. If no such storage is available no data is stored locally.
+## Storage for content
 
-All code related to the SQLite database integration can be found in this folder https://github.com/serenity-kit/Serenity/tree/main/apps/app/store. Currently SQLCipher is not integrated in any environment and therefor only an in-memory database is used for local state.
+Therefor an encrypted SQLite database is supposed to be used. Specifically https://github.com/sqlcipher/sqlcipher which is encrypted with one master key. The master key is stored in a secure storage supported by a Secure Element (see further down). If no such storage is available the data is only stored in memory and not persisted on the device.
 
-## Desktop clients
+For the mobile devices (ReactNative) currently there is no secure implementation and we are looking into forking https://github.com/margelo/react-native-quick-sqlite to support SQLCipher. For the desktop devices https://github.com/signalapp/better-sqlite3 is will be used. It is a SQLCipher implementation working in Electron.
 
-For the desktop devices https://github.com/signalapp/better-sqlite3 is used. It is a SQLCipher implementation working in Electron.
+Currently SQLCipher is not integrated in any environment and therefor all environments only use an in-memory storage.
 
-To store the master key electron offers a https://www.electronjs.org/docs/latest/api/safe-storage and integrates with the macOS Keychain and Windows Credential Manager on Windows.
+All code related to the SQLite database integration can be found in this folder https://github.com/serenity-kit/Serenity/tree/main/apps/app/store.
 
-### iOS and Android
+The following data is currently stored in there:
 
-For the mobile devices (ReactNative) currently there is no secure implementation and we are looking into forking https://github.com/margelo/react-native-quick-sqlite to support SQLCipher.
+- user (only id & username/email) https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/userStore.ts#L17-L18
+- userChain https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/userChainStore.ts
+- workspace (only id & name) https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/workspaceStore.ts#L20-L21
+- workspaceChain https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/workspaceChainStore.ts
+- workspaceMemberDevicesProof https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/workspaceMemberDevicesProofStore.ts
+- documentChain https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/documentChainStore.ts
+
+The benefit of using a local sqlite DB as state management in memory is, that it work as soon as a a secure sqlite storage is available we can re-use the same logic and only need to switch the storage implementation to persist the data.
+
+And since chain and workspaceMemberDevicesProof entries are never overwritten by new data coming from the server, the server is discourage to send broken entries since a client either can persist then or could be long-living if users keep their browser tabs open.
+
+### Database reset on logout
+
+On logout the local DB must be wiped. Since currently only an in-memory DB is used it is fine to just reconnect and the new instance will be empty.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/logoutInProgressScreen/LogoutInProgressScreen.tsx#L155
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/sql/sql.web.ts#L22-L25
+
+## Storage for device and session keys
+
+### Environments
+
+#### iOS and Android
 
 The `expo-secure-store` package is used to store a `Device` using Keychain on iOS and KeyStore on Android. Both leverage a Secure Element to keep the data secure.
 
 Code reference: https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/device/deviceStore.ts
 
-### Web
+#### Desktop clients
+
+To store the master key electron offers a https://www.electronjs.org/docs/latest/api/safe-storage and integrates with the macOS Keychain and Windows Credential Manager on Windows.
+
+Currently this is not implemented and the electron app behaves like a web client.
+
+#### Web client
 
 Since in a web client no secure storage available and therefor no content is persistet on the client. Possibly hashes of the chains (e.g. workspace-chain) could be stored, but this is not implemented and no decision in favor of it has been made.
 
@@ -38,8 +67,10 @@ The design that was rejected was to store the device private keys directly in th
 
 Code reference: https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/device/webDeviceStore.ts
 
-## Web client
+### Deleting keys on logout
 
-## Current state
+On logout the device and session keys must be deleted. This is done by calling the `clearDeviceAndSessionStorage` function.
 
-As of today only the private keys and sessionToken are stored in the secure storage and no other data is stored locally.
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/logoutInProgressScreen/LogoutInProgressScreen.tsx#L136
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/clearDeviceAndSessionStorage.ts
