@@ -1,0 +1,216 @@
+# Workspace Member Devices Proof
+
+## Introduction
+
+For each workspace chain event the members in the workspace can be determined. This though doesn't include the devices of members. In order to create a cryptographic proof of all the members including their devices the `workspaceMemberDevicesProof` was created.
+
+## Background
+
+An alternative design would have been to have the members and devices in the workspace chain. This would have certainly simplified the design, but then the workspace chain would become a lot longer and the server would have to provide a lot more data for web clients.
+
+The idea of this design was to have a short workspace chain and only fetch the devices information on demand when the `workspaceMemberDevicesProof` is references e.g. in a Document snapshot AAD.
+
+## Structures
+
+### Proof
+
+```ts
+type WorkspaceMemberDevicesProof = {
+  hash: string;
+  hashSignature: string;
+  version: number;
+  clock: number;
+});
+```
+
+The `hash` is a hash of the `WorkspaceMemberDevicesProofData` and the `hashSignature` is a signature of the hash. The `hash` is used to uniquely identify entries and the `hashSignature` is used to verify the integrity of the data by a device of an existing workspace member.
+
+The `clock` is a number that is incremented for each new `WorkspaceMemberDevicesProof` and is used to determine the latest `WorkspaceMemberDevicesProof` and also to make sure that the server can only provide newer `WorkspaceMemberDevicesProof` and never older ones.
+
+The `version` is used to make sure that the client is aware of the latest `WorkspaceMemberDevicesProof` and if not the client must be updated.
+
+### Content Structure
+
+```ts
+type WorkspaceMemberDevicesProofData = {
+  clock: number;
+  workspaceChainHash: string;
+  userChainHashes: record<userId, userChainEventHash>;
+};
+```
+
+The `clock` is the same as in the `WorkspaceMemberDevicesProof`.
+
+The `workspaceChainHash` is the hash of the workspace chain that should be referenced.
+
+The `userChainHashes` is a map of user ids to the hash of the user chain event of each user. From each user-chain it's possible to determine the active and removed devices of the user.
+
+## Utilities
+
+There are only two functions to create and verify a `WorkspaceMemberDevicesProof`.
+
+- createWorkspaceMemberDevicesProof
+- isValidWorkspaceMemberDevicesProof
+
+## Cryptographic Dependencies and actual implementation
+
+- hash: `sodium.to_base64(sodium.crypto_generichash(64, message))`
+- canonicalize: predictable canocalization of JSON as defined by RFC8785 https://www.npmjs.com/package/canonicalize
+- sign: `sodium.crypto_sign_detached(message, privateKey)`
+- signVerify: `sodium.crypto_sign_detached(signature, message, publicKey)`
+
+### createWorkspaceMemberDevicesProof
+
+It requires the following arguments:
+
+- workspaceMemberDevicesProofData
+- authorKeyPair
+
+The functions returns a proof.
+
+```ts
+hash = hash(canonicalize(workspaceMemberDevicesProofData));
+hashSignature = sign(
+  concat("workspace_member_devices_proof", hash),
+  authorKeyPair.privateKey
+);
+```
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-member-devices-proof/src/createWorkspaceMemberDevicesProof.ts
+
+### isValidWorkspaceMemberDevicesProof
+
+```ts
+hash = hash(canonicalize(workspaceMemberDevicesProofData));
+assert(hash === proof.hash);
+signVerify(
+  proof.hashSignature,
+  concat("workspace_member_devices_proof", hash),
+  authorKeyPair.publicKey
+);
+```
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-member-devices-proof/src/isValidWorkspaceMemberDevicesProof.ts
+
+## Version Checks
+
+Each Workspace Integrity Proof is associated with a version. Is the version higher than what the current client is aware of the client will throw an error and the user must be informed to update the application.
+
+## App Integration
+
+### Creating a proof
+
+On every event that changes adds a workspace chain entry or changes a user chain entry the client must create a new `WorkspaceMemberDevicesProof` and send it along with the event to the server.
+
+The server verifies the result and stores the `WorkspaceMemberDevicesProof` with the related data (workspaceChainHash and userChainHashes) in the database. The server uses one re-usable function to verify the proof: https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/workspace/updateWorkspaceMemberDevicesProof.ts. Only for creating a workspace the `isValidWorkspaceMemberDevicesProof` is used directly on the server.
+
+Here a list of all event and the affected chain:
+
+- create workspace (workspace chain)
+- update workspace member role (workspace chain)
+- remove member from workspace (workspace chain)
+- create workspace invitation (workspace chain)
+- accept workspace invitation (workspace chain)
+- delete workspace invitation (workspace chain)
+- add device during login (user chain)
+- delete device (user chain)
+- logout (user chain - removes the current device)
+
+### Events
+
+#### Create workspace
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/createWorkspaceForm/CreateWorkspaceForm.tsx#L137-L149
+
+Server: https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/workspace/createWorkspace.ts#L93-L103
+
+#### Update workspace member role
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/workspaceSettingsMembersScreen/WorkspaceSettingsMembersScreen.tsx#L112-L129
+
+Server: https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/workspace/updateWorkspaceMemberRole.ts#L67-L73
+
+#### Remove member from workspace
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/workspaceSettingsMembersScreen/WorkspaceSettingsMembersScreen.tsx#L187-L204
+
+Server: https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/workspace/removeMemberAndRotateWorkspaceKey.ts#L78-L85
+
+#### Create workspace invitation
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/workspace/CreateWorkspaceInvitation.tsx#L129-L146
+
+Server: https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/workspace/createWorkspaceInvitation.ts#L111-L117
+
+#### Accept workspace invitation
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/workspace/acceptWorkspaceInvitation.ts#L82-L123
+
+Server: https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/workspace/acceptWorkspaceInvitation.ts#L75-L82
+
+### Delete workspace invitation
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/workspace/CreateWorkspaceInvitation.tsx#L187-L204
+
+Server: https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/workspace/deleteWorkspaceInvitations.ts#L53-L59
+
+#### Add device during login
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/loginHelper.ts#L197-L245
+
+Server: https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/authentication/createSessionAndDevice.ts#L127C1-L136
+
+#### Delete device
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/workspace/acceptWorkspaceInvitation.ts#L82-L123
+
+Server: https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/device/deleteDevice.ts#L239-L248
+
+#### Logout
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/workspace/acceptWorkspaceInvitation.ts#L82-L123
+
+Server: https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/authentication/logout.ts#L79-L88
+
+### Verifying the proof
+
+Every proof that is received by a client is verified and only then added to the local sqlite DB.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/workspaceMemberDevicesProofStore.ts#L133-L142
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/workspaceMemberDevicesProofStore.ts#L217-L229
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/workspaceMemberDevicesProofStore.ts#L300-L312
+
+In case a proof is not valid and error is thrown and the application will crash. In the future this should be handled more gracefully by showing an error message explaining the problem.
+
+### Storing verified proofs
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/workspaceMemberDevicesProofStore.ts
+
+### Referencing the proof
+
+The proof is referenced in the AAD of a document snapshot.
+
+First the client fetches the latest `WorkspaceMemberDevicesProof` from the server.
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L188-L189
+
+Then the client creates a new document snapshot and references the `WorkspaceMemberDevicesProof` in the AAD.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L226
+
+### Using the proof
+
+When the client receives a document snapshot it will try to get the data for that proof (first locally if available and then from the remote).
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L243-L248
+
+Based on the proof a client can determine if the document snapshot and all referenced updates and ephemeral messages are signed by a an active device by a member of the workspace at the time of the workspace chain entry.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L314-L328
+
+#### Snapshot rotation
+
+Whenever a new `WorkspaceMemberDevicesProof` is available the new document change must result in a snapshot. This is necessary since the new `WorkspaceMemberDevicesProof` might reference a new `UserChain` entry that added the current device of the user. Without referencing the new proof the client would sign the update with a device that is not referenced in the proof and therefore the update would be invalid.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L303-L310

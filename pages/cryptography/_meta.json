@@ -5,6 +5,7 @@
   "user-and-device-authentication": "User & Device Authentication",
   "user-and-device-logout": "User & Device Logout",
   "workspace-chain": "Workspace Chain (Membership & Roles)",
+  "workspace-member-devices-proof": "Workspace Member Devices Proof",
   "workspace-invitation": "Workspace Invitation",
   "workspace-encryption": "Workspace Key (Encryption)",
   "folder-encryption": "Folder (Encryption & Integrity)",
@@ -12,7 +13,6 @@
   "document-encryption": "Document",
   "document-attachments": "Document Attachments",
   "document-comments": "Document Comments",
-  "workspace-integrity": "Workspace Integrity",
   "client-server": "Client Server (Authentication & Authorization)",
   "secure-client-storage": "Secure Client Storage",
   "miscellaneous": "Miscellaneous"
