@@ -172,13 +172,11 @@ https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/decryptSn
 
 ### Validating collaborators
 
-In the callback `isValidCollaborator` each snapshot, update or ephemeral message is verified if the author is a member of the workspace.
+In the callback `isValidClient` each snapshot, update or ephemeral message is verified if the author is a member of the workspace.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L213-L254
+Based on the `WorkspaceMemberDevicesProof` it can be determined if the device was an active member of the workspace at the time of the snapshot, update or ephemeral message.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/findVerifiedUserByDeviceSigningPublicKey/findVerifiedUserByDeviceSigningPublicKey.ts (TODO should not automatically include all removed or expired devices)
-
-Currently this doesn't include already removed devices or devices from removed members. These can also be valid, but therefor the implementation needs to be refined and snapshots need to include in their public data a reference to a workspace chain event as well as the user chain events for all members.
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L314-L328
 
 ## Document Title
 
