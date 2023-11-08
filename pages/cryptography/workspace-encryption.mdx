@@ -176,4 +176,4 @@ https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/workspaceStore
 
 ## Open Questions
 
-- Must the workspaceKey and workspaceKeyId cryptographically e.g. signing bound to the workspace and the workspace chain with a reference to the event hash? If not could someone replace a workspace key and abuse that to decrypt data with an attack?
+- Must the workspaceKey and workspaceKeyId cryptographically e.g. signing bound to the workspace and the workspace chain with a reference to the event hash? If not could someone replace a workspace key and abuse that to decrypt data with an attack? The important part is probably to verify that the author of a workspace key box is verified by referencing the workspace chain.
