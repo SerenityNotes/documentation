@@ -9,9 +9,48 @@ The following information should be stored locally if possible:
 
 ## Storage for content
 
-Therefor an encrypted SQLite database is supposed to be used. Specifically https://github.com/sqlcipher/sqlcipher which is encrypted with one master key. The master key is stored in a secure storage supported by a Secure Element (see further down). If no such storage is available the data is only stored in memory and not persisted on the device.
+### Electron
 
-For the mobile devices (ReactNative) currently there is no secure implementation and we are looking into forking https://github.com/margelo/react-native-quick-sqlite to support SQLCipher. For the desktop devices https://github.com/signalapp/better-sqlite3 is will be used. It is a SQLCipher implementation working in Electron.
+The in-memory Sqlite db is regularliy exported (currently debounces on every document write), encrypted and stored on the local file system. The key and nonce to encrypt the database is encrypted using https://www.electronjs.org/docs/latest/api/safe-storage which is also stored on the local file system.
+
+```ts
+key = sodium.randombytes_buf(sodium.crypto_secretbox_KEYBYTES);
+nonce = sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES);
+encryptedKeyAndNonce = electron.safeStorage.encryptString(serialize(key, nonce));
+encryptedDatabase = sodium.crypto_secretbox_easy(database, nonce, key);
+```
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/sql/sql.electron.ts#L29-L39
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/desktop-app/src/index.ts#L114-L157
+
+When the application is started the encrypted database is loaded and decrypted using the key and nonce. The decrypted database is then used as the in-memory database.
+
+```ts
+decryptedDataString = electron.safeStorage.decryptString(encryptedKeyAndNonce);
+decryptedData = deserialize(decryptedDataString);
+decryptedDatabase = sodium.crypto_secretbox_open_easy(data, nonce, key);
+```
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/sql/sql.electron.ts#L9-L23
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/desktop-app/src/index.ts#L159-L185
+
+On logout the database, key-and-nonce file is deleted.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/logoutInProgressScreen/LogoutInProgressScreen.tsx#L139
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/sql/sql.electron.ts#L40C1-L42
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/desktop-app/src/index.ts#L187-L197
+
+#### Considerations for alternative designs
+
+An alternative design could be to use https://github.com/signalapp/better-sqlite3. It is a SQLCipher implementation working in Electron. The API is async and won't work for a good UX. Therefor we would need to manage the writes between the in-memory and the persisted DB. This includes managing failed writes and possible recovery. This is out of scope for now, but we will consider it in the future.
+
+### Mobile
+
+For the mobile devices (ReactNative) currently there is no Sqlite implementation that allows exporting the data nor is there a Sqlite implementation supporting persisting the the database encrypted (e.g. https://github.com/sqlcipher/sqlcipher) and we are looking into forking https://github.com/margelo/react-native-quick-sqlite to support SQLCipher.
 
 Currently SQLCipher is not integrated in any environment and therefor all environments only use an in-memory storage.
 
@@ -25,6 +64,8 @@ The following data is currently stored in there:
 - workspaceChain https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/workspaceChainStore.ts
 - workspaceMemberDevicesProof https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/workspaceMemberDevicesProofStore.ts
 - documentChain https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/documentChainStore.ts
+- document content https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/documentStore.ts
+- app state https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/appStateStore.ts (lastOpenWorkspaceId for a better UX to open the last open workspace on app start)
 
 The benefit of using a local sqlite DB as state management in memory is, that it work as soon as a a secure sqlite storage is available we can re-use the same logic and only need to switch the storage implementation to persist the data.
 
@@ -32,11 +73,11 @@ And since chain and workspaceMemberDevicesProof entries are never overwritten by
 
 ### Database reset on logout
 
-On logout the local DB must be wiped. Since currently only an in-memory DB is used it is fine to just reconnect and the new instance will be empty.
+On logout the local in-memory DB must be wiped. For the in-memory DB it is fine to just reconnect and the new instance will be empty.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/logoutInProgressScreen/LogoutInProgressScreen.tsx#L155
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/logoutInProgressScreen/LogoutInProgressScreen.tsx#L159
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/sql/sql.web.ts#L22-L25
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/sql/sql.web.ts#L23-L26
 
 ## Storage for device and session keys
 
@@ -46,13 +87,43 @@ https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/sql/sql.web.ts
 
 The `expo-secure-store` package is used to store a `Device` using Keychain on iOS and KeyStore on Android. Both leverage a Secure Element to keep the data secure.
 
-Code reference: https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/device/deviceStore.ts
+Code reference: https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/deviceStore/deviceStore.ts
+
+Also for the sessionKey the `expo-secure-store` package is used to store the sessionKey in the Keychain on iOS and KeyStore on Android.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/sessionKeyStore/sessionKeyStore.ts
 
 #### Desktop clients
 
-To store the master key electron offers a https://www.electronjs.org/docs/latest/api/safe-storage and integrates with the macOS Keychain and Windows Credential Manager on Windows.
+To store the device with it's private keys we use Electron's https://www.electronjs.org/docs/latest/api/safe-storage. It integrates with the macOS Keychain and Windows Credential Manager on Windows.
 
-Currently this is not implemented and the electron app behaves like a web client.
+Here the `safeStorage.encryptString` and `safeStorage.decryptString` is used to encrypt/decrypt a string with the serialized device. The encrypted string is stored on the local file system.
+
+Encryption:
+
+```ts
+serializedDevice = JSON.stringify(device);
+const encryptedDevice = await safeStorage.encryptString(serializedDevice);
+```
+
+Decryption:
+
+```ts
+const serializedDevice = await safeStorage.decryptString(encryptedDevice);
+const device = JSON.parse(serializedDevice);
+```
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/deviceStore/deviceStore.electron.ts
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/setupElectronInterface/electronInterface.electron.ts#L22-L34
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/desktop-app/src/index.ts#L17
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/desktop-app/src/index.ts#L235-L265
+
+The session key is stored in the same way as the device.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/sessionKeyStore/sessionKeyStore.ts
 
 #### Web client
 
@@ -60,17 +131,29 @@ Since in a web client no secure storage available and therefor no content is per
 
 Also device private keys are not stored locally. The only data that is stored locally is the sessionKey, webDeviceAccessToken and a webDeviceKey. The webDeviceKey is used to encrypt the web device (incl. private signing and encryption key) and stored on the server when adding the device to the account.
 
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/loginHelper.ts#L122-L138
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/webDeviceStore.ts#L16-L19
+
 When a user open the application the webDeviceAccessToken is used to fetch the encrypted device and decrypt it with the webDeviceKey. The decrypted device is then stored only in memory and will be gone after closing the browser tab.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/hooks/useCachedResources.ts (invoked on app start)
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/device/getActiveDevice.ts#L10
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/webDeviceStore.ts#L26-L50
 
 This design was chosen to ensure that a revoked or expired web device can't be extracted from a compromised browser since the server rejects returning the device ciphertext and nonce.
 The design that was rejected was to store the device private keys directly in the browser's LocalStorage. This would have been possible, but would have meant that a compromised browser could have extracted the device private keys.
 
-Code reference: https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/device/webDeviceStore.ts
+Code reference for the webDeviceStore: https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/webDeviceStore.ts
+
+The session key in comparision is directly stored in localstorage using the `@react-native-async-storage/async-storage` package: https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/sessionKeyStore/sessionKeyStore.ts
 
 ### Deleting keys on logout
 
 On logout the device and session keys must be deleted. This is done by calling the `clearDeviceAndSessionStorage` function.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/logoutInProgressScreen/LogoutInProgressScreen.tsx#L136
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/logoutInProgressScreen/LogoutInProgressScreen.tsx#L140
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/clearDeviceAndSessionStorage.ts
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/clearDeviceAndSessionStores.ts
