@@ -15,26 +15,26 @@ For staging and development the allowed list of origins is:
 - `http://localhost:4001` // needed for GraphiQL in e2e
 - `serenity-desktop://app` // electron desktop app
 
-see https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/createServer.ts#L113-L125
+see https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/createServer.ts#L108-L120
 
 ## Server Authentication
 
 The authentication process using OPAQUE results in a `sessionKey` which is associated to a user and a specific device. See user-registration.
 
-This information is stored in the `Session` table. https://github.com/serenity-kit/Serenity/blob/main/apps/backend/prisma/schema.prisma#L126-L134
+This information is stored in the `Session` table. https://github.com/serenity-kit/Serenity/blob/main/apps/backend/prisma/schema.prisma#L141-L149
 
 Every GraphQL request (which use HTTPS as transport layer) sent to the server has to contain the `sessionKey` in the `Authorization` header. The server then checks if the session is valid and provides the session and user to the backend resolver.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/createServer.ts#L44-L75
+https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/createServer.ts#L39-L70
 
 Here is an example of a resolver that requires a valid user.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/graphql/mutations/comment/createComment.ts#L42-L44
+https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/graphql/mutations/comment/createComment.ts#L45-L47
 
 Depending on the specific mutation further checks regarding the device are performed e.g.
 
-- if the create workspace invitation event is sent from the mainDevice of the user https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/graphql/mutations/workspace/createWorkspaceInvitation.ts#L45-L53
-- validating the sessionTokenSignature in the login step `addDevice` https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/graphql/mutations/authentication/addDevice.ts#L78-L85
+- if the create workspace invitation event is sent from the mainDevice of the user https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/graphql/mutations/workspace/createWorkspaceInvitation.ts#L47-L55
+- validating the sessionTokenSignature in the login step `addDevice` https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/graphql/mutations/authentication/addDevice.ts#L86-L93
 
 All sessions have an `expiredAt` set which is determined by the device type and always a bit larger than the expiration date of the device itself in case it's defined to avoid possible time differences between the client and the server. For device without an expiration data e.g. mobile and desktop device a value of 1000 years is chosen.
 
@@ -42,7 +42,7 @@ All sessions have an `expiredAt` set which is determined by the device type and 
 - temporary-web: 25 hours (device expiration is set to 24 hours)
 - mobile | desktop: 1000 years
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/authentication/createSessionAndDevice.ts#L46-L65
+https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/authentication/createSessionAndDevice.ts#L57-L82
 
 While a session key is connected to a `device` this is not enforced everywhere since certain interactions require a signature from the `mainDevice`.
 
@@ -60,7 +60,7 @@ For the staging and production environments a `wss` connection is required. The 
 `${host}/${docId}?sessionKey=${sessionKey}`;
 ```
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/createServer.ts#L212-L235
+https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/createServer.ts#L225-L261
 
 ## Possible Improvement
 

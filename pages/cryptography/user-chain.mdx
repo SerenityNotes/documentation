@@ -7,7 +7,7 @@ Different clients will do/can do different validations based on their capabiliti
 If no secure storage is available e.g. in a web client the full user-chain per user is downloaded and processed when necessary. This means a web client can't dedect a fork. See exmaples where the user-chains reconstructed are used:
 
 - https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/workspace/rotateWorkspaceKey.ts (rotating the workspace key)
-- https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L231-L239 (verifying a document change)
+- https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L266-L281(verifying a document change)
 - https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/createWorkspaceForm/CreateWorkspaceForm.tsx (getting all user device before creating a workspace)
   - https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/getAndVerifyUserDevices/getAndVerifyUserDevices.ts
 
@@ -176,7 +176,7 @@ signVerify(
 );
 ```
 
-https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/applyEvent.ts#L53-L69
+https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/applyEvent.ts#L57-L82
 
 ### Remove Device
 
@@ -189,7 +189,7 @@ Validations:
 - the device does exist in the state derived until the event
 - it's not the main device that is being removed
 
-https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/applyEvent.ts#L71-L90
+https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/applyEvent.ts#L84-L103
 
 ## Versioning
 
@@ -197,7 +197,7 @@ Each transaction includes a version of the protocol. Once the version has been i
 
 It also fails in case the version is higher than the currently known to prevent the chain being processed by an older client.
 
-https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/applyEvent.ts#L34-L45
+https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/applyEvent.ts#L38-L49
 
 ### Server Checks
 

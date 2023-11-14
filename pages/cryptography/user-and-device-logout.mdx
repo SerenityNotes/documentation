@@ -8,10 +8,10 @@
 
 Logout is done on a route, but has to be triggered manually with a click that sets the `logoutInitiated` variable to true. Just visiting the route will not trigger the logout.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/accountMenu/AccountMenu.tsx#L52-L60
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/accountMenu/AccountMenu.tsx#L58-L66
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/logoutInProgressScreen/LogoutInProgressScreen.tsx#L17
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/logoutInProgressScreen/LogoutInProgressScreen.tsx#L27
 
 Once the logout runs a `removeDevice` chain event is created on the user-chain. In addition all device and session storages are cleared.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/logoutInProgressScreen/LogoutInProgressScreen.tsx#L70-L86
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/logoutInProgressScreen/LogoutInProgressScreen.tsx#L80-L92

@@ -28,7 +28,7 @@ Note: For `encryptAead` every message is prefixed with a block of four 0-bytes t
 
 ## Usage in Serenity
 
-The Page component integrates with secsync here: https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L117-L263
+The Page component integrates with secsync here: https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L123-L352
 
 There are two main aspects on how Secsync is used in Serenity:
 
@@ -37,14 +37,14 @@ There are two main aspects on how Secsync is used in Serenity:
 
 ### Important params
 
-- `documentId`: the documentId created by the documentChain - https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L120
-- `signatureKeyPair`: the client's device key pairs https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/pageScreen/PageScreen.tsx#L115-L121
+- `documentId`: the documentId created by the documentChain - https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L125
+- `signatureKeyPair`: the client's device key pairs https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L126
 
 ### Creating a new Document incl. a Snapshot
 
 When creating a document from the sidebar first the parentFolder's key is derived. Ever document has a parentFolder as Documents can't exist without one.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/sidebarFolder/SidebarFolder.tsx#L272-L284
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/sidebarFolder/SidebarFolder.tsx#L271-L291
 
 Then the full KeyDerivationTrace for the Snapshot is constructed including the snapshotKey entry.
 
@@ -53,15 +53,15 @@ subkeyId = randomInt();
 snapshotKey = kdf(subkeyId, "snapshot", parentFolderKey);
 ```
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/sidebarFolder/SidebarFolder.tsx#L285-L295
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/sidebarFolder/SidebarFolder.tsx#L292-L317
 
 With it a new Snapshot is created.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/sidebarFolder/SidebarFolder.tsx#L301-L321
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/sidebarFolder/SidebarFolder.tsx#L329-L352
 
 The document title key is derived from the Snapshot key and encrypted. (explained in more detail further down on this Page)
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/sidebarFolder/SidebarFolder.tsx#L322-L332
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/sidebarFolder/SidebarFolder.tsx#L353-L362
 
 All the data is sent to the backend and the document is created in the database.
 
@@ -97,7 +97,7 @@ https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/createSna
 
 ### Creating a new Snapshot for an existing Document
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L128-L180
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L151-L238
 
 What's known to the user is the parentFolderId and first the parent folder's key has to be derived. This is done by fetching active workspaceKeyId and the folder trace (without keys).
 
@@ -109,11 +109,11 @@ Then the actual keys are derived for the KeyDerivationTrace and the last entry's
 
 https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/createNewSnapshotKey/createNewSnapshotKey.ts#L35-L48
 
-https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/deriveKeysFromKeyDerivationTrace/deriveKeysFromKeyDerivationTrace.ts#L16
+https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/deriveKeysFromKeyDerivationTrace/deriveKeysFromKeyDerivationTrace.ts
 
 With this key a new snapshot key is derived and pushed to the end of the new KeyDerivationTrace including the new snapshot key. The trace as well as the new snapshot key are provided to secsync to encrypt the new snapshot content.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L174-L177
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L227-L232
 
 In addition to make sure the content can be decrypted by a document share link a new encrypted box is created for each document share link and sent along with the new snapshot.
 
@@ -136,7 +136,7 @@ boxCiphertext = asymmetric_encrypt(
 );
 ```
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L170-L189
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L205-L222
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/encryptSnapshotKeyForShareLinkDevice/encryptSnapshotKeyForShareLinkDevice.ts
 
@@ -144,7 +144,7 @@ https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/encryptSn
 
 In the callback `getSnapshotKey` the Snapshot key is derived from the workspaceKey and the KeyDerivationTrace stored in the publicData (AAD) of the Snapshot.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L181-L202
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L283-L287
 
 https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/deriveExistingSnapshotKey/deriveExistingSnapshotKey.ts#L10
 
@@ -166,7 +166,7 @@ assert(content[27...51] === snapshotId); // check for snapshot id
 snapshotKey = content[52...131];
 ```
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/sharePage/SharePage.tsx#L97-L113
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/sharePage/SharePage.tsx#L116-L132
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/decryptSnapshotKey/decryptSnapshotKey.ts
 
@@ -176,7 +176,7 @@ In the callback `isValidClient` each snapshot, update or ephemeral message is ve
 
 Based on the `WorkspaceMemberDevicesProof` it can be determined if the device was an active member of the workspace at the time of the snapshot, update or ephemeral message.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L314-L328
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L327-L345
 
 ## Document Title
 
@@ -191,7 +191,7 @@ nonce = generateNonce();
 ciphertext = encryptAead(documentTitle, {}, nonce, documentTitleKey);
 ```
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L155-L169
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L194-L203
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/createDocumentTitleKey/createDocumentTitleKey.ts
 

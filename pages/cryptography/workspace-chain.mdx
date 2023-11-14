@@ -4,7 +4,9 @@ Each workspace has a workspace-chain to determine the membership and role of a u
 
 Different clients will do/can do different validations based on their capabilities. On a with a secure storage the chain for each workspace is stored in a the secure storage. The idea is that the client only asks the server only for new chain items and verifies that these are valid. In case an invalid item would appear an exception is thrown, the user informed and the entiry workspace should go into a read-only mode. Currently neither Desktop nor Mobile clients have have this implemented and store the workspace-chain in a secure storage.
 
-If no secure storage is available e.g. in a web client the full workspace chain is downloaded and process upon loading the web application and in stored in memory. This means a web client can't dedect a fork, except if it's happening while having an active session. See the current implementation: https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/Navigation.tsx#L207-L247
+If no secure storage is available e.g. in a web client the full workspace chain is downloaded and processed upon loading the web application and in stored in memory. This means a web client can't dedect a fork, except if it's happening while having an active session. See the current implementation: https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/Navigation.tsx#L247-L249C8
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/Navigation.tsx#L255-L257
 
 In the future a client without a secure storage could store the last chain event hash and verify that it's part of the chain. If these hashes get leaked there is some meta-data leaked but it doesn't result in leaking of encrypted content. There is a trade-off between verifying the chain and leaking meta-data.
 
@@ -84,15 +86,13 @@ message = canonicalize(transactionHash, previousTransactionHash);
 signature = sign(concat("workspace_chain", message), privateKey);
 ```
 
-https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/createChain.ts#L18-L35
-https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/addMember.ts#L22-L36
-https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/removeMember.ts#L19-L34
-https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/removeMember.ts#L19-L34
-https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/addInvitation.ts#L68-L83
-https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/acceptInvitation.ts#L93-L107
-https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/removeInvitations.ts#L25-L40
-https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/updateMember.ts#L22-L36
-
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/createChain.ts#L19-L40
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/addMember.ts#L23-L42
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/removeMember.ts#L20-L40
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/addInvitation.ts#L72-L91
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/acceptInvitation.ts#L98-L117
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/removeInvitations.ts#L26-L46
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/updateMember.ts#L23-L42
 ## Cryptographic validation for createChain event
 
 ```ts
@@ -111,7 +111,7 @@ This allows to validate:
 - the transaction is authenticated by all authors
 - the transaction is not modified
 
-https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/utils.ts#L15-L36
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/utils.ts#L16-L37
 
 ## Cryptographic validation for all chain events (except createChain)
 
@@ -133,7 +133,7 @@ This allows to validate:
 - the previousTransactionHash is authenticated by all authors
 - the previousTransactionHash is not modified
 
-https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/applyEvent.ts#L22-L43
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/applyEvent.ts#L21C1-L58
 
 ## Transaction Types and Validations
 
@@ -165,7 +165,7 @@ Validations:
 - all authors must be members with the role `ADMIN`
 - the member must not exist in state constructured from the existing chain
 
-https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/applyEvent.ts#L156-L171
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/applyEvent.ts#L161-L176
 
 ### Remove Member
 
@@ -179,7 +179,7 @@ Validations:
 - the member must exist in state constructured from the existing chain
 - not allowed to remove the last admin
 
-https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/applyEvent.ts#L212-L240
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/applyEvent.ts#L217-L245
 
 ### Update Member
 
@@ -194,7 +194,7 @@ Validations:
 - not allowed to demote the last admin
 - the role must be different than the current one
 
-https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/applyEvent.ts#L173-L210
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/applyEvent.ts#L178-L215
 
 ### Add invitation
 
@@ -251,7 +251,7 @@ signVerify(
 );
 ```
 
-https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/applyEvent.ts#L117-L154
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/applyEvent.ts#L122-L159
 
 ### Accept invitation
 
@@ -304,7 +304,7 @@ signVerify(
 );
 ```
 
-https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/applyEvent.ts#L60-L115
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/applyEvent.ts#L65-L120
 
 ### Remove Invitations
 
@@ -317,7 +317,7 @@ Validations:
 - all authors must be members with the role `ADMIN`
 - the invitations must exist in state constructured from the existing chain
 
-https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/applyEvent.ts#L242-L256
+https://github.com/serenity-kit/Serenity/blob/main/packages/workspace-chain/src/applyEvent.ts#L247-L261
 
 ## Versioning
 

@@ -93,7 +93,7 @@ Workspace keys are fetched on demand e.g. in the Sidebar:
 
 When a new device is added during login, the mainDevice is available. All boxes for all workspaceKeys are retrieved and decrypted. Then a new box is created for each workspaceKey and encrypted for the new device.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/login/LoginForm.tsx#L90-L92
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/login/LoginForm.tsx#L95-L97
 
 https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/workspace/attachDeviceToWorkspaces.ts
 
@@ -115,7 +115,7 @@ When a member is removed from a workspace, a new workspace key is generated and 
 
 This action can only be done by an admin of the workspace (as defined in the workpace-chain state).
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/workspaceSettingsMembersScreen/WorkspaceSettingsMembersScreen.tsx#L143-L147
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/workspaceSettingsMembersScreen/WorkspaceSettingsMembersScreen.tsx#L171-L175
 
 https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/workspace/rotateWorkspaceKey.ts
 
@@ -127,7 +127,7 @@ When a device is removed by a user from their device list in the UI, a new works
 
 NOTE: This interaction is problematic since any user can rotate a workspace key (currently also with the role VIEWER or COMMENTER). The benefit is that everyone can force any new encryption to be done with a new workspace key. The downside is that this can be used to create an error state for specific users or even specific devices of a user by creating broken encrypted workspace keys boxes.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/accountDevicesSettingsScreen/AccountDevicesSettingsScreen.tsx#L107-L120
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/accountDevicesSettingsScreen/AccountDevicesSettingsScreen.tsx#L115-L128
 
 https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/workspace/rotateWorkspaceKey.ts
 
@@ -154,11 +154,11 @@ ciphertext = encryptAead(workspaceInfo, {}, nonce, workspaceKey);
 ```
 
 During workspace creation:
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/createWorkspaceForm/CreateWorkspaceForm.tsx#L167-L170
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/createWorkspaceForm/CreateWorkspaceForm.tsx#L196-L199
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/encryptWorkspaceInfo/encryptWorkspaceInfo.ts
 
-or also in the settings: https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/workspaceSettingsGeneralScreen/WorkspaceSettingsGeneralScreen.tsx#L94-L97
+or also in the settings: https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/workspaceSettingsGeneralScreen/WorkspaceSettingsGeneralScreen.tsx#L92-L95
 
 ## Decrypting workspace info (name)
 
@@ -167,12 +167,12 @@ workspaceInfo = decryptAead(ciphertext, "", nonce, key);
 ```
 
 In the settings:
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/machines/workspaceSettingsLoadWorkspaceMachine.ts#L164-L180
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/machines/workspaceSettingsLoadWorkspaceMachine.ts#L172-L190
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/decryptWorkspaceInfo/decryptWorkspaceInfo.ts
 
 Or when loading the workspace info from the API to list them in the AccountMenu
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/workspaceStore.ts#L73-L143
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/workspaceStore.ts#L111-L184
 
 ## Open Questions
 

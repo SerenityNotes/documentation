@@ -143,7 +143,7 @@ signVerify(
 );
 ```
 
-https://github.com/serenity-kit/Serenity/blob/main/packages/document-chain/src/applyEvent.ts#L62-L79
+https://github.com/serenity-kit/Serenity/blob/main/packages/document-chain/src/applyEvent.ts#L63-L80
 
 Note: When invoking this function it must be verified that the author has the required permissions to add a device (`EDITOR` | `ADMIN`). This is not part of the chain validation.
 
@@ -189,7 +189,7 @@ Validations:
 
 - the device does exist in the state derived until the event
 
-https://github.com/serenity-kit/Serenity/blob/main/packages/document-chain/src/applyEvent.ts#L81-L95
+https://github.com/serenity-kit/Serenity/blob/main/packages/document-chain/src/applyEvent.ts#L82-L96
 
 Note: When invoking this function it must be verified that the author has the required permissions to add a device (`EDITOR` | `ADMIN`). This is not part of the chain validation.
 
@@ -199,7 +199,7 @@ Each transaction includes a version of the protocol. Once the version has been i
 
 It also fails in case the version is higher than the currently known to prevent the chain being processed by an older client.
 
-https://github.com/serenity-kit/Serenity/blob/main/packages/document-chain/src/applyEvent.ts#L43-L54
+https://github.com/serenity-kit/Serenity/blob/main/packages/document-chain/src/applyEvent.ts#L44-L55
 
 ### Server Checks
 
@@ -207,7 +207,7 @@ When resolving the state on the backend also the knownVersion has to passed in. 
 
 https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/document/createDocument.ts#L63-L66
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/document/createDocumentShareLink.ts#L80-L84
+https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/document/createDocumentShareLink.ts#L81-L85
 
 https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/document/removeDocumentShareLink.ts#L54-L58
 
@@ -218,13 +218,13 @@ Whenever a new document is created a new document chain is created with it: http
 This PR added querying the documentChain, adding and removing share links: https://github.com/serenity-kit/Serenity/pull/807
 
 Each snapshot references the documentChain hash:
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/createWorkspaceForm/CreateWorkspaceForm.tsx#L138
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/createWorkspaceForm/CreateWorkspaceForm.tsx#L155
 
 The purpose is to bind the documentChain to the snapshot. This allows to determine the current state of the documentChain based on the snapshot. This is required to determine the current state of the share devices at the given time and will be relevant in the future if a share link can add comments or edit the document.
 
 When reconstrucing a snapshot key it is verified that the document chain the server provided to the user is the same or newer than the one already used in the snapshot. This is to prevent the server from providing an older document chain than already known.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L226-L235
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L261-L281
 
 This ensures the chain can only move forward.
 
@@ -241,7 +241,7 @@ shareLinkDevice = decrypt(
 );
 ```
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/sharePageScreen/sharePageScreenMachine.ts#L143-L154
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/sharePageScreen/sharePageScreenMachine.ts#L118-L129
 
 Instead of having a seed for generating the key pair it was decided that a secret box should be used. This ensurese that if the link gets invalidated the shareLinkDevice can't be reconstructed from the link anymore, because the server can refuse to share the secret box. With a seed used for key generation functions reconstruction would have been possible and a leaked share link would have meant a leaked share link device that could decrypt document content.
 

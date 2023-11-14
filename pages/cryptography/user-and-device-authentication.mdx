@@ -60,24 +60,24 @@ webDeviceCiphertext = encrypt(
 ```
 
 opaque_login
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/login/LoginForm.tsx#L69-L74
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/login/LoginForm.tsx#L70-L75
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/loginHelper.ts#L69-L88
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/loginHelper.ts#L65-L86
 
 decryptMainDevice
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/loginHelper.ts#L100-L104
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/loginHelper.ts#L88-L92
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/decryptMainDevice/decryptMainDevice.ts
 
 UserChain.addDevice
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/loginHelper.ts#L134-L143
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/loginHelper.ts#L140-L150
 
 sign sessionToken to verify the client has access to the private key of the new device (to prevent a MITM attack replacing the device)
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/loginHelper.ts#L145-L150
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/loginHelper.ts#L157-L162
 
 After the device was added to the user, the client starts adding the device to known workspaces. This is triggered here:
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/login/LoginForm.tsx#L88-L90
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/login/LoginForm.tsx#L95-L97
 
 https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/workspace/attachDeviceToWorkspaces.ts
 
@@ -101,20 +101,20 @@ When a user opens the browser and still has a valid (non-expired and non-revoked
 webDevice = decrypt(webDeviceCiphertext, webDeviceNonce, webDeviceKey);
 ```
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/device/webDeviceStore.ts#L32-L44
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/webDeviceStore.ts#L31-L44
 
 ## Active Session Authentication
 
 The `sessionKey` is sent along as `Authorization` header. Based on that the backend can identify the user.
 
-Client code: https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/urqlClient/urqlClient.ts#L103
+Client code: https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/urqlClient/urqlClient.ts#L106
 Server code: https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/createServer.ts#L39-L70
 
 ## Opaque Server Public Key Verification
 
 In order to make sure the user is talking to the correct opaque server the server's public key is verified.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/loginHelper.ts#L91-L93
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/loginHelper.ts#L74-L76
 
 https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/getOpaqueServerPublicKey/getOpaqueServerPublicKey.ts
 
