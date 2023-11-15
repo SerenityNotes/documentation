@@ -73,9 +73,9 @@ https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/workspace/acce
 
 The user clicks on accept and gets presented the verify password modal. Once submitted the client will download and unlock the `mainDevice`. The workspace invitation is accepted by creating a acceptInvitation event in the workspaceChain. See [Workspace Chain: Accept Invitation](./workspace-chain#accept-invitation).
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/acceptWorkspaceInvitationScreen/AcceptWorkspaceInvitationScreen.tsx#L233-L243
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/acceptWorkspaceInvitationScreen/AcceptWorkspaceInvitationScreen.tsx#L253-L265
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/acceptWorkspaceInvitationScreen/AcceptWorkspaceInvitationScreen.tsx#L64-L108
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/acceptWorkspaceInvitationScreen/AcceptWorkspaceInvitationScreen.tsx#L105-L122
 
 https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/workspace/acceptWorkspaceInvitation.ts
 
@@ -83,7 +83,7 @@ https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/workspace/acce
 
 On the invitation page the user gets presented the Registration form.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/acceptWorkspaceInvitationScreen/AcceptWorkspaceInvitationScreen.tsx#L265-L272
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/acceptWorkspaceInvitationScreen/AcceptWorkspaceInvitationScreen.tsx#L286-L293
 
 The normale [registration process](./user-registration#steps-without-workspace-invitation) happens with a few differences. After finish creating a `mainDevice` the `invitationSigningKeyPairSeed` is encrypted.
 
@@ -94,7 +94,7 @@ nonce = generateNonce();
 ciphertext = encryptAead(invitationSigningKeyPairSeed, "", nonce, key);
 ```
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/register/RegisterForm.tsx#L119-L135
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/register/RegisterForm.tsx#L152-L165
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/encryptWorkspaceInvitationKey/encryptWorkspaceInvitationKey.ts
 
@@ -105,7 +105,7 @@ When invoking the `finishRegistration` mutation the following parameters are sen
 - `nonce`
 - `ciphertext`
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/register/RegisterForm.tsx#L150-L153
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/register/RegisterForm.tsx#L176-L189
 
 Then the client queries for pending workspace invitations, validates them and accepts them. Such a pending workspace invitation can only exist if the user signed up on the workspace invitation page.
 
@@ -116,9 +116,9 @@ key = kdf(subkeyId, "wsinvite", exportKey);
 invitationSigningKeyPairSeed = decryptAead(ciphertext, "", nonce, key);
 ```
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/registrationVerificationScreen/RegistrationVerificationScreen.tsx#L157
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/registrationVerificationScreen/RegistrationVerificationScreen.tsx#L69
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/registrationVerificationScreen/RegistrationVerificationScreen.tsx#L67-L119
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/registrationVerificationScreen/RegistrationVerificationScreen.tsx#L81-L86
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/decryptWorkspaceInvitationKey/decryptWorkspaceInvitationKey.ts
 

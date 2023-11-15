@@ -63,7 +63,7 @@ The following information is sent to the server:
 }
 ```
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/register/RegisterForm.tsx#L85-L193
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/register/RegisterForm.tsx#L106-L189
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/createAndEncryptMainDevice/createAndEncryptMainDevice.ts
 
@@ -71,7 +71,7 @@ The server stores this information in the database in the `UnverifiedUser` table
 
 On the client side the `username`, `password` and `createChainEvent` are stored in memory.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/register/RegisterForm.tsx#L169-L176
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/register/RegisterForm.tsx#L199-L203
 
 https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/registrationMemoryStore.ts
 
@@ -88,13 +88,13 @@ From here on there are two different paths depending on if the user:
 
 The user enters the verification code and submits the form. The server checks the code and if it is valid, it creates a new `User` record in the database and the user finished the registration process. The `verifyRegistration` mutation only requires the username and the verification code. There are some concerns if this could be abused, but no valid use-case was found so far.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/registrationVerificationScreen/RegistrationVerificationScreen.tsx#L175-L180
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/registrationVerificationScreen/RegistrationVerificationScreen.tsx#L180-L185
 
 After that the client is automatically logged in based on the `username` and `password` stored in memory.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/registrationVerificationScreen/RegistrationVerificationScreen.tsx#L198C15-L198C46
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/registrationVerificationScreen/RegistrationVerificationScreen.tsx#L203
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/registrationVerificationScreen/RegistrationVerificationScreen.tsx#L121-L166
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/registrationVerificationScreen/RegistrationVerificationScreen.tsx#L119-L171
 
 The user is done in this case and redirected to onboarding.
 
@@ -102,7 +102,7 @@ The user is done in this case and redirected to onboarding.
 
 In case the user open the email link the username and verification code are part of the query parameters and the user lands on the RegistrationVerificationScreen. The `verifyRegistration` mutation can be triggered and since on the server only the username and the verification code are required this can be done without being logged in. There are some concerns if this could be abused, but no valid use-case was found so far.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/authentication/finalizeRegistration.ts#L123-L134
+https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/authentication/finalizeRegistration.ts#L145-L152
 
 The user is sent to the login page where the password from before has to be entered. This triggeres the login process as described in the user authentication section in the documentation.
 
@@ -111,9 +111,9 @@ The user is sent to the login page where the password from before has to be ente
 In order to secure the `exportKey` from being brute-forced a certain level of password complexity is checked upon registration. The [https://github.com/zxcvbn-ts/zxcvbn](https://github.com/zxcvbn-ts/zxcvbn) project is used to determine the complexity. It is based on [Dropox's zxcvbn](https://github.com/dropbox/zxcvbn), written in Typescript, actively maintained and used by other projects e.g. [Clerk](https://clerk.com/docs/security/password-protection#password-strength).
 
 Configuration: https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/register/RegisterForm.tsx#L33-L42
-Evaluation: https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/register/RegisterForm.tsx#L265
+Evaluation: https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/register/RegisterForm.tsx#L263
 
-The highest score (4 - very unguessable: strong protection from offline slow-hash scenario. (guesses >= 10^10)) must be reached before a user can register: https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/register/RegisterForm.tsx#L102-L106
+The highest score (4 - very unguessable: strong protection from offline slow-hash scenario. (guesses >= 10^10)) must be reached before a user can register: https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/register/RegisterForm.tsx#L100-L104
 
 ### Why is this important?
 
