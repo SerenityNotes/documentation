@@ -28,7 +28,7 @@ Based on the workspace-chain a current state of the members can be derived.
 
 - generate_id: `sodium.to_base64(sodium.randombytes_buf(24))`
 - hash: `sodium.to_base64(sodium.crypto_generichash(64, message))`
-- canonicalize: predictable canocalization of JSON as defined by RFC8785 https://www.npmjs.com/package/canonicalize
+- canonicalize: predictable canonicalization of JSON as defined by RFC8785 https://www.npmjs.com/package/canonicalize
 - signSeedKeypair: `sodium.crypto_sign_seed_keypair(seed)`
 - sign: `sodium.crypto_sign_detached(message, privateKey)`
 - signVerify: `sodium.crypto_sign_detached(signature, message, publicKey)`

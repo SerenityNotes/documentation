@@ -55,7 +55,7 @@ There are only two functions to create and verify a `WorkspaceMemberDevicesProof
 ## Cryptographic Dependencies and actual implementation
 
 - hash: `sodium.to_base64(sodium.crypto_generichash(64, message))`
-- canonicalize: predictable canocalization of JSON as defined by RFC8785 https://www.npmjs.com/package/canonicalize
+- canonicalize: predictable canonicalization of JSON as defined by RFC8785 https://www.npmjs.com/package/canonicalize
 - sign: `sodium.crypto_sign_detached(message, privateKey)`
 - signVerify: `sodium.crypto_sign_detached(signature, message, publicKey)`
 
@@ -193,24 +193,24 @@ https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/workspaceMembe
 The proof is referenced in the AAD of a document snapshot.
 
 First the client fetches the latest `WorkspaceMemberDevicesProof` from the server.
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L191-L192
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L197-L198
 
 Then the client creates a new document snapshot and references the `WorkspaceMemberDevicesProof` in the AAD.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L229
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L247
 
 ### Using the proof
 
 When the client receives a document snapshot it will try to get the data for that proof (first locally if available and then from the remote).
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L254-L259
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L272-L277
 
 Based on the proof a client can determine if the document snapshot and all referenced updates and ephemeral messages are signed by a an active device by a member of the workspace at the time of the workspace chain entry.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L327-L346
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L353-L357
 
 #### Snapshot rotation
 
 Whenever a new `WorkspaceMemberDevicesProof` is available the new document change must result in a snapshot. This is necessary since the new `WorkspaceMemberDevicesProof` might reference a new `UserChain` entry that added the current device of the user. Without referencing the new proof the client would sign the update with a device that is not referenced in the proof and therefore the update would be invalid.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L313-L326
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L337-L350

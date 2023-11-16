@@ -28,7 +28,7 @@ Note: For `encryptAead` every message is prefixed with a block of four 0-bytes t
 
 ## Usage in Serenity
 
-The Page component integrates with secsync here: https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L123-L352
+The Page component integrates with secsync here: https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L123-L376
 
 There are two main aspects on how Secsync is used in Serenity:
 
@@ -97,7 +97,7 @@ https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/createSna
 
 ### Creating a new Snapshot for an existing Document
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L151-L238
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L157-L256
 
 What's known to the user is the parentFolderId and first the parent folder's key has to be derived. This is done by fetching active workspaceKeyId and the folder trace (without keys).
 
@@ -113,7 +113,7 @@ https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/deriveKey
 
 With this key a new snapshot key is derived and pushed to the end of the new KeyDerivationTrace including the new snapshot key. The trace as well as the new snapshot key are provided to secsync to encrypt the new snapshot content.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L227-L232
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L165-L169
 
 In addition to make sure the content can be decrypted by a document share link a new encrypted box is created for each document share link and sent along with the new snapshot.
 
@@ -136,7 +136,7 @@ boxCiphertext = asymmetric_encrypt(
 );
 ```
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L205-L222
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L211-L228
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/encryptSnapshotKeyForShareLinkDevice/encryptSnapshotKeyForShareLinkDevice.ts
 
@@ -144,7 +144,7 @@ https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/encryptSn
 
 In the callback `getSnapshotKey` the Snapshot key is derived from the workspaceKey and the KeyDerivationTrace stored in the publicData (AAD) of the Snapshot.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L283-L287
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L301-L305
 
 https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/deriveExistingSnapshotKey/deriveExistingSnapshotKey.ts#L10
 
@@ -176,7 +176,7 @@ In the callback `isValidClient` each snapshot, update or ephemeral message is ve
 
 Based on the `WorkspaceMemberDevicesProof` it can be determined if the device was an active member of the workspace at the time of the snapshot, update or ephemeral message.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L327-L345
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L351-L370
 
 ## Document Title
 
@@ -191,7 +191,7 @@ nonce = generateNonce();
 ciphertext = encryptAead(documentTitle, {}, nonce, documentTitleKey);
 ```
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L194-L203
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L200-L209
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/createDocumentTitleKey/createDocumentTitleKey.ts
 
@@ -205,6 +205,15 @@ The document title shows up in the sidebar and to efficiently list the documents
 documentTitleKey = kdf(subkeyId, "doctitle", snapshotKey);
 documentTitle = decryptAead(ciphertext, {}, nonce, documentTitleKey);
 ```
+
+### In the sidebar
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/sidebarPage/SidebarPage.tsx#L67-L71
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/documentStore.ts#L154-L165
+
+### In the document before re-encrypting the current one based on a new snapshot
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L190-L195
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/decryptDocumentTitleBasedOnSnapshotKey/decryptDocumentTitleBasedOnSnapshotKey.ts
 

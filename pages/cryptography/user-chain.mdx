@@ -7,7 +7,7 @@ Different clients will do/can do different validations based on their capabiliti
 If no secure storage is available e.g. in a web client the full user-chain per user is downloaded and processed when necessary. This means a web client can't dedect a fork. See exmaples where the user-chains reconstructed are used:
 
 - https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/workspace/rotateWorkspaceKey.ts (rotating the workspace key)
-- https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L266-L281(verifying a document change)
+- https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L358-L365 (verifying a document change)
 - https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/createWorkspaceForm/CreateWorkspaceForm.tsx (getting all user device before creating a workspace)
   - https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/getAndVerifyUserDevices/getAndVerifyUserDevices.ts
 
@@ -34,7 +34,7 @@ Based on the user-chain a current state of a user including all theirs devices c
 
 - generate_id: `sodium.to_base64(sodium.randombytes_buf(24))`
 - hash: `sodium.to_base64(sodium.crypto_generichash(64, message))`
-- canonicalize: predictable canocalization of JSON as defined by RFC8785 https://www.npmjs.com/package/canonicalize
+- canonicalize: predictable canonicalization of JSON as defined by RFC8785 https://www.npmjs.com/package/canonicalize
 - sign: `sodium.crypto_sign_detached(message, privateKey)`
 - signVerify: `sodium.crypto_sign_detached(signature, message, publicKey)`
 

@@ -9,6 +9,7 @@ The comments don't need to be in the document since they can reference a positio
 - Comments content is encrypted and can only be decrypted by a client with access to the document. See document encryption for more details.
 - The server must be honest an provide the comments to all clients that have access to the document.
 - The comments are not stored in the document in order to allow the commenter role that can create comments, but not edit the document.
+- The goal is still to store comment keys in the document when write access is available. The idea is that the role commenter doesn't have write access to the comment, they can create the comment and an editor can add the key later to the document after decrypting it.
 
 ## Cryptographic Dependencies and actual implementation
 
@@ -17,6 +18,8 @@ The comments don't need to be in the document since they can reference a positio
 - generateNonce: `sodium.randombytes_buf(sodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES)`
 - encryptAead: `sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(message, additionalData, nonce, key)`
 - decryptAead: `sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(ciphertext, additionalData, nonce, key)`
+- sign: `sodium.crypto_sign_detached(message, privateKey)`
+- signVerify: `sodium.crypto_sign_detached(signature, message, publicKey)`
 
 Note: For `encryptAead` every message is prefixed with a block of four 0-bytes to ensure commitment. [More info here](https://github.com/serenity-kit/secsync/blob/main/packages/secsync/src/crypto/encryptAead.ts#L16-L20)
 
@@ -32,24 +35,135 @@ When creating a comment first a commentKey is derived from the currently active 
 subkeyId = randomInt();
 commentKey = kdf(subkeyId, "comment_", snapshotKey);
 nonce = generateNonce();
-ciphertext = encryptAead(fileContent, "", nonce, commentKey);
+additionalAuthenticatedData = canonicalize(
+  commentId,
+  documentId,
+  snapshotId,
+  subkeyId,
+  device.signingPublicKey
+);
+ciphertext = encryptAead(commentContent, additionalAuthenticatedData, nonce, commentKey);
+encryptedComment = canonicalize(ciphertext, nonce);
+signatur = sign(
+  concat(
+    "comment",
+    encryptedComment
+  ),
+  device.signingPrivateKey
+);
 ```
 
-Create comment: https://github.com/serenity-kit/Serenity/blob/main/apps/app/machines/commentsMachine.ts#L415C9-L440
-Create reply: https://github.com/serenity-kit/Serenity/blob/main/apps/app/machines/commentsMachine.ts#L441-L464
+Create comment: https://github.com/serenity-kit/Serenity/blob/main/apps/app/machines/commentsMachine.ts#L502-L545
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/createCommentKey/createCommentKey.ts
 
-https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/encryptComment/encryptComment.ts
+https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/encryptAndSignComment/encryptAndSignComment.ts
 
-## Decrypting comments and replies
+Since only the latest snapshot is fetched to retrieve the current document state, the comment key is also stored in the Yjs document. This avoids the need to fetch an older snapshot to derive the comment key.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/machines/commentsMachine.ts#L536-L540
+
+They system to derive the comment key from the snapshot key is still in place to allow users with the role `COMMENTER` to create comments without direct write access to the document. Clients with write access will add the keys to the document after loading the comments and identifying that the comment key is missing in the document.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/machines/commentsMachine.ts#L407-L412
+
+## Verify and decrypt comments
 
 When decrypting a comment the commentKey is derived from the currently active snapshotKey. The commentKey is used to decrypt the comment.
 
 ```ts
+signVerify(
+  signature,
+  concat("comment", canonicalize(ciphertext, nonce)),
+  authorDevice.signingPublicKey
+);
 commentKey = kdf(subkeyId, "comment_", snapshotKey);
-commentContent = decryptAead(ciphertext, "", nonce, commentKey);
+additionalAuthenticatedData = canonicalize(
+  commentId,
+  documentId,
+  snapshotId,
+  subkeyId,
+  authorDevice.signingPublicKey,
+);
+commentContent = decryptAead(ciphertext, additionalAuthenticatedData, nonce, commentKey);
 ```
+
+The purpose of the signature is to ensure that the comment reply was created by the author of the comment.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/machines/commentsMachine.ts#L368-L431
+
+https://github.com/serenity-kit/Serenity/tree/main/packages/common/src/recreateCommentKey
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/verifyAndDecryptComment/verifyAndDecryptComment.ts
+
+## Create a comment reply
+
+It's very similar to creating a comment. The main difference is that the AAD is different.
+
+When creating a comment reply first a commentKey is derived from the currently active snapshotKey. The commentReplyKey is used to encrypt the comment.
+
+```ts
+subkeyId = randomInt();
+commentReplyKey = kdf(subkeyId, "comment_", snapshotKey);
+nonce = generateNonce();
+additionalAuthenticatedData = canonicalize(
+  commentReplyId,
+  commentId,
+  documentId,
+  snapshotId,
+  subkeyId,
+  device.signingPublicKey,
+);
+ciphertext = encryptAead(commentReplyContent, additionalAuthenticatedData, nonce, commentKey);
+encryptedCommentReply = canonicalize(ciphertext, nonce);
+signatur = sign(
+  concat(
+    "comment_reply",
+    encryptedCommentReply
+  ),
+  device.signingPrivateKey
+);
+```
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/machines/commentsMachine.ts#L547-L586
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/createCommentKey/createCommentKey.ts
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/encryptAndSignCommentReply/encryptAndSignCommentReply.ts
+
+Since only the latest snapshot is fetched to retrieve the current document state, the comment reply key is also stored in the Yjs document. This avoids the need to fetch an older snapshot to derive the comment reply key.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/machines/commentsMachine.ts#L580-L584
+
+They system to derive the comment reply key from the snapshot key is still in place to allow users with the role `COMMENTER` to create comments without direct write access to the document. Clients with write access will add the keys to the document after loading the comments and identifying that the comment key is missing in the document.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/machines/commentsMachine.ts#L451-L456
+
+## Verify and decrypt comment replies
+
+When decrypting a comment the commentKey is derived from the currently active snapshotKey. The commentKey is used to decrypt the comment.
+
+```ts
+signVerify(
+  signature,
+  concat("comment_reply", canonicalize(ciphertext, nonce)),
+  authorDevice.signingPublicKey
+);
+commentReplyKey = kdf(subkeyId, "comment_", snapshotKey);
+additionalAuthenticatedData = canonicalize(
+  commentReplyId,
+  commentId,
+  documentId,
+  snapshotId,
+  subkeyId,
+  authorDevice.signingPublicKey,
+);
+commentReplyContent = decryptAead(ciphertext, additionalAuthenticatedData, nonce, commentReplyKey);
+```
+
+The purpose of the signature is to ensure that the comment reply was created by the author of the comment.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/machines/commentsMachine.ts#L433-L483
 
 https://github.com/serenity-kit/Serenity/tree/main/packages/common/src/recreateCommentKey
 
@@ -59,7 +173,10 @@ https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/decryptCo
 
 On the client side a GraphQL mutation has to be invoked.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/machines/commentsMachine.ts#L465-L478
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/machines/commentsMachine.ts#L587-L593 (delete comment)
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/machines/commentsMachine.ts#L594-L601 (delete comment reply)
+
+In both cases the key is also remove from the document entry.
 
 The server needs to check if the client has the permission to delete the comment. If the user has the permission the comment is deleted from the database.
 
@@ -68,19 +185,3 @@ https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/graphql/muta
 
 https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/comment/deleteComments.ts
 https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/commentreply/deleteCommentReplies.ts
-
-## Not implemented yet
-
-### TODO Snapshot Key Rotation
-
-Everytime a new Snapshot is taking all the existing commentIds and related keys are stored in the Yjs doccument and the old entries are cleaned out and then they are not accessible anymore to new users or page share links.
-
-Old comment keys are kept in the document. This is necessary to decrypt old comments.
-
-### TODO Signing the comment
-
-Same as a Secsync update the ciphertext should be signed with the deviceSigningPublicKey to verify the author.
-
-## Possible improvements for a future version
-
-- Comments created by users with the role `ADMIN` or `EDITOR` could be written directly into the document or at least a reference to them. This would make sure these comments are not lost if the server is not honest.

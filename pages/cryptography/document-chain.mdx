@@ -29,7 +29,7 @@ Based on the document-chain a current state of the active share devices can be d
 
 - generate_id: `sodium.to_base64(sodium.randombytes_buf(24))`
 - hash: `sodium.to_base64(sodium.crypto_generichash(64, message))`
-- canonicalize: predictable canocalization of JSON as defined by RFC8785 https://www.npmjs.com/package/canonicalize
+- canonicalize: predictable canonicalization of JSON as defined by RFC8785 https://www.npmjs.com/package/canonicalize
 - sign: `sodium.crypto_sign_detached(message, privateKey)`
 - signVerify: `sodium.crypto_sign_detached(signature, message, publicKey)`
 - noncegen: `sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES)`
@@ -224,7 +224,7 @@ The purpose is to bind the documentChain to the snapshot. This allows to determi
 
 When reconstrucing a snapshot key it is verified that the document chain the server provided to the user is the same or newer than the one already used in the snapshot. This is to prevent the server from providing an older document chain than already known.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L261-L281
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L263-L282
 
 This ensures the chain can only move forward.
 
