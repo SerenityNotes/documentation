@@ -9,7 +9,42 @@ The following information should be stored locally if possible:
 
 ## Storage for content
 
+### General
+
+Sqlite was chosen as the database to store the data locally. Depending on the environment the database is only stored in-memory and/or encrypted and persisted on the local file system.
+
+- Web: only in-memory
+- Electron: in-memory and regularliy and encrypted on the local file system
+- iOS and Android: every change is directly encrypted and persisted on the local file system using sqlcipher
+
+All code related to the SQLite database integration can be found in this folder https://github.com/serenity-kit/Serenity/tree/main/apps/app/store.
+
+The following data is currently stored in there:
+
+- user (only id & username/email) https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/userStore.ts#L17-L18
+- userChain https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/userChainStore.ts
+- workspace (only id & name) https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/workspaceStore.ts#L20-L21
+- workspaceChain https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/workspaceChainStore.ts
+- workspaceMemberDevicesProof https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/workspaceMemberDevicesProofStore.ts
+- documentChain https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/documentChainStore.ts
+- document content https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/documentStore.ts
+- app state https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/appStateStore.ts (lastOpenWorkspaceId for a better UX to open the last open workspace on app start)
+
+The benefit of using a local sqlite DB as state management is, that it the same way in all environments and only need to switch the storage implementation. This simplify the application logic and ideally reduces bugs.
+
+And since chain and workspaceMemberDevicesProof entries are never overwritten by new data coming from the server, the server is discourage to send broken entries since a client either can persist then or could be long-living if users keep their browser tabs open.
+
+### Web
+
+For the web client the in-memory Sqlite DB is used. The database is created on app start and deleted on logout.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/sql/sql.web.ts#L6-L21 (open DB)
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/sql/sql.web.ts#L23-L26 (reset DB on logout)
+
 ### Electron
+
+For the Electron client the in-memory Sqlite DB is used.
 
 The in-memory Sqlite db is regularliy exported (currently debounces on every document write), encrypted and stored on the local file system. The key and nonce to encrypt the database is encrypted using https://www.electronjs.org/docs/latest/api/safe-storage which is also stored on the local file system.
 
@@ -50,26 +85,15 @@ An alternative design could be to use https://github.com/signalapp/better-sqlite
 
 ### Mobile
 
-For the mobile devices (ReactNative) currently there is no Sqlite implementation that allows exporting the data nor is there a Sqlite implementation supporting persisting the the database encrypted (e.g. https://github.com/sqlcipher/sqlcipher) and we are looking into forking https://github.com/margelo/react-native-quick-sqlite to support SQLCipher.
+For the mobile devices (ReactNative) no in-memory Sqlite database is used, but instead a React Native wrapper library https://github.com/OP-Engineering/op-sqlcipher to directly use https://github.com/sqlcipher/sqlcipher to persist data encrypted on the device.
 
-Currently SQLCipher is not integrated in any environment and therefor all environments only use an in-memory storage.
+Sqlcipher requires and encryption key. The key is generated every time and no key is stored in the secure store of the device. The key is generated using `sodium.randombytes_buf(sodium.crypto_secretbox_KEYBYTES)`.
 
-All code related to the SQLite database integration can be found in this folder https://github.com/serenity-kit/Serenity/tree/main/apps/app/store.
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/sql/sql.ts#L15-L21
 
-The following data is currently stored in there:
+When the user logs out a the database is deleted and the key in the secure store is deleted. Right after that the `ready` function runs again and creates a new database and key.
 
-- user (only id & username/email) https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/userStore.ts#L17-L18
-- userChain https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/userChainStore.ts
-- workspace (only id & name) https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/workspaceStore.ts#L20-L21
-- workspaceChain https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/workspaceChainStore.ts
-- workspaceMemberDevicesProof https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/workspaceMemberDevicesProofStore.ts
-- documentChain https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/documentChainStore.ts
-- document content https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/documentStore.ts
-- app state https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/appStateStore.ts (lastOpenWorkspaceId for a better UX to open the last open workspace on app start)
-
-The benefit of using a local sqlite DB as state management in memory is, that it work as soon as a a secure sqlite storage is available we can re-use the same logic and only need to switch the storage implementation to persist the data.
-
-And since chain and workspaceMemberDevicesProof entries are never overwritten by new data coming from the server, the server is discourage to send broken entries since a client either can persist then or could be long-living if users keep their browser tabs open.
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/sql/sql.ts#L35-L40
 
 ### Database reset on logout
 
