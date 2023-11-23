@@ -218,7 +218,7 @@ Whenever a new document is created a new document chain is created with it: http
 This PR added querying the documentChain, adding and removing share links: https://github.com/serenity-kit/Serenity/pull/807
 
 Each snapshot references the documentChain hash:
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/createWorkspaceForm/CreateWorkspaceForm.tsx#L155
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/createWorkspaceForm/CreateWorkspaceForm.tsx#L163
 
 The purpose is to bind the documentChain to the snapshot. This allows to determine the current state of the documentChain based on the snapshot. This is required to determine the current state of the share devices at the given time and will be relevant in the future if a share link can add comments or edit the document.
 
