@@ -105,8 +105,6 @@ Each key that is derived using a KDF has a context set depending on the purpose 
 - `doctitle` - document title encryption key
 - `comment_` - document comment encryption key
 
-Note: The libsodium documention states that the context is a 8 character string. This is currently not enforced by libsodium.js. See [https://github.com/jedisct1/libsodium.js/issues/322](https://github.com/jedisct1/libsodium.js/issues/322).
-
 ## Code separation
 
 There is a clear separation between the server and client code to ensure a compromised server can't trick a client in breaking the security model.
