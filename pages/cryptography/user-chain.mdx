@@ -8,8 +8,8 @@ If no secure storage is available e.g. in a web client the full user-chain per u
 
 - https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/workspace/rotateWorkspaceKey.ts (rotating the workspace key)
 - https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/page/Page.tsx#L358-L365 (verifying a document change)
-- https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/createWorkspaceForm/CreateWorkspaceForm.tsx#L87-L90 (getting all user device before creating a workspace)
-  - https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/getAndVerifyUserDevices/getAndVerifyUserDevices.ts
+- https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/createWorkspaceForm/CreateWorkspaceForm.tsx#L88-L111 (getting all user device before creating a workspace)
+  - https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/userChainStore.ts#L290
 
 In the future a client without a secure storage could store the last chain event hash and verify that it's part of the chain. If these hashes get leaked there is some meta-data leaked but it doesn't result in leaking of encrypted content. There is a trade-off between verifying the chain and leaking meta-data.
 
