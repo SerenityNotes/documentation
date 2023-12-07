@@ -25,48 +25,14 @@ Related repositories we developed and use in Serenity:
 - https://github.com/serenity-kit/opaque (audit in progress by another team)
 - https://github.com/serenity-kit/react-native-opaque (audit in progress by another team)
 
-## Device
-
-Currently we create two keypairs for each device:
-
-- signing key pair
-- encryption key pair
-
-Then we sign the public encryption key with the signing key. This has to be verified every time a client receives a device.
-
-Would it be better to create a single signing keypair and use the functionality to convert a ED25519 keypair to a X25519 keypair?
-
-Upside would be clear conversion and less signature verification
-What is the downside? Only one I can think of is eventuall switching to a different encryption scheme and then it might be a bigger change.
-
-## React-Native-Libsodium
-
-- Is the `memcpy` appraoch fine? https://github.com/serenity-kit/react-native-libsodium/blob/4773086b8f25fda31e6c68606ddf8dddf826bc58/cpp/react-native-libsodium.cpp#L82 I'm not a C++ expert and deadling with memory is always scary. I'm not sure if there is a better way to do this.
-
 ## HTTPS connections
 
 - Are there any HTTP security feautes we should activate? (HSTS is on)
 
-## AEAD Encryption
-
-- Is Known-plaintext attack an issue for us? We use a XChaCha20-Poly1305 construction
-  - We are creating an empty snapshot whenever we create a document. Could this reveal the key?
-  - The updates are very small when syncing in real time (often only one character). Is this too deterministic and could this reveal the key?
-    If so should we add a random factor to every update or how to best resolve this?
-- What about commitment regarding one (plaintext, AAD) pair matching only one (ciphertext, authentication tag) pair https://github.com/serenity-kit/Serenity/pull/731/commits/95184cdd5d7beb5c31fe990d874e4274beedfbc0 & https://github.com/serenity-kit/naisho/commit/f64c02b2b91ca085a2f48e7440a755c313a5397b
-
 ## Websocket Connections
 
-- Is the `sessionKey` authentication as a query parameter secure enough or what are proposed alternatives?
+- Is passing an authentication token as a query parameter secure enough or what are proposed alternatives? I read this is the only way to pass authentication tokens in a websocket connection.
 - Should the `Origin` header be verified to basically simuate CORS checking? Does it provide any additional security in this case?
 - Should the `Sec-WebSocket-Protocol` header be verified to basically simulate CORS checking? Does it provide any additional security in this case?
 - Is the `webSocketServer` setup fine or should we restrict `maxPayload` for example?
 - Is `webSocketServer.handleUpgrade` handled correctly?
-
-## Key separation and derivation
-
-- Is our way of key separation sufficient? How can we improve?
-
-## Protocol Versioning
-
-- Any recommendations for protocol versioning for all our utils that are so closely tied to the application. Any best practices?
