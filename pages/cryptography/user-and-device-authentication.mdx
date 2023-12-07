@@ -4,7 +4,7 @@
 
 - opaque_login: OPAQUE login flow
 - userChainAddDevice: see user-chain
-- kdf: `sodium.crypto_kdf_derive_from_key(crypto_aead_xchacha20poly1305_ietf_KEYBYTES, subkeyId, context, key)`
+- kdf: `sodium.crypto_kdf_hkdf_sha256_expand(sodium.crypto_kdf_hkdf_sha256_extract(key, subkeyId), context, crypto_aead_xchacha20poly1305_ietf_KEYBYTES)`
 - signingKeyPairGen: `sodium.crypto_sign_keypair()`
 - encryptionKeyPairGen: `sodium.crypto_box_keypair()`
 - sign: `sodium.crypto_sign_detached(message, privateKey)`
