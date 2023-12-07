@@ -21,7 +21,8 @@ All code related to the SQLite database integration can be found in this folder 
 
 The following data is currently stored in there:
 
-- user (only id & username/email) https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/userStore.ts#L17-L18
+- user https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/userStore.ts#L14-L25
+- currentUserInfo https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/currentUserInfoStore.ts
 - userChain https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/userChainStore.ts
 - workspace (only id & name) https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/workspaceStore.ts#L20-L21
 - workspaceChain https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/workspaceChainStore.ts
@@ -155,9 +156,9 @@ Since in a web client no secure storage available and therefor no content is per
 
 Also device private keys are not stored locally. The only data that is stored locally is the sessionKey, webDeviceAccessToken and a webDeviceKey. The webDeviceKey is used to encrypt the web device (incl. private signing and encryption key) and stored on the server when adding the device to the account.
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/loginHelper.ts#L122-L138
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/loginHelper.ts#L106-L122
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/webDeviceStore.ts#L16-L19
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/webDeviceStore.ts#L17-L20
 
 When a user open the application the webDeviceAccessToken is used to fetch the encrypted device and decrypt it with the webDeviceKey. The decrypted device is then stored only in memory and will be gone after closing the browser tab.
 
