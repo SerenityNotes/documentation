@@ -105,10 +105,21 @@ https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/webDeviceStore
 
 ## Active Session Authentication
 
-The `sessionKey` is sent along as `Authorization` header. Based on that the backend can identify the user.
+An authorization token is constructed for every request.
 
-Client code: https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/urqlClient/urqlClient.ts#L106
+```ts
+sessionToken = kdf("AQEBAQEBAQEBAQEBAQEBAQ", "session_token", sessionKey);
+datetime = generateDatetimeAsIsoString()
+sessionDatetimeSubkey = kdf(datetime, "session_datetime", sessionKey);
+authorizationToken = `${sessionToken}|${datetime}|${sessionDatetimeSubkey}`;
+```
+
+The `authorizationToken` is sent along as `Authorization` header. Based on that the backend can identify the user and verify the session.
+
+Client code: https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/urqlClient/urqlClient.ts#L76-L81
 Server code: https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/createServer.ts#L39-L70
+
+More details in [Client Server (Authentication & Authorization)](./client-server).
 
 ## Opaque Server Public Key Verification
 

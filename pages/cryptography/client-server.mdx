@@ -19,13 +19,33 @@ see https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/createSe
 
 ## Server Authentication
 
-The authentication process using OPAQUE results in a `sessionKey` which is associated to a user and a specific device. See user-registration.
+The authentication process using OPAQUE results in a `sessionKey` which is associated to a user and a specific device. See user-registration. In addition to that a `sessionToken` is derived using a HKDF from the `sessionKey`. The `sessionKey` is never sent over the network.
+
+On the client:
+- https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/urqlClient/urqlClient.ts#L76-L78
+- https://github.com/serenity-kit/Serenity/blob/main/apps/app/store/workspaceChainStore.ts#L222-L224
+- https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/loginHelper.ts#L227-L229
+
+On the server:
+- https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/authentication/createSessionAndDevice.ts#L145
+
+https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/deriveSessionAuthorization/deriveSessionAuthorization.ts#L15-L19
 
 This information is stored in the `Session` table. https://github.com/serenity-kit/Serenity/blob/main/apps/backend/prisma/schema.prisma#L141-L149
 
-Every GraphQL request (which use HTTPS as transport layer) sent to the server has to contain the `sessionKey` in the `Authorization` header. The server then checks if the session is valid and provides the session and user to the backend resolver.
+Every GraphQL request (which use HTTPS as transport layer) sent to the server has to contain a `Authorization` header which is constructed like: `${sessionToken}|${datetime}|${sessionDatetimeSubkey}`.
+
+The `sessionToken` is stable per session and used to identify the session. The `datetime` is the current timestamp as a ISO 8601 string and the `sessionDatetimeSubkey` is a HMAC of the `datetime` using the `sessionKey` as a secret.
+
+The server then checks if the session is valid and provides the session and user to the backend resolver. The validation derives the `sessionDatetimeSubkey` and validates that it is correct and verifies that the `datetime` is not older than 3 hours or 3 hours in the future. This doesn't avoid reply attacks, but it limits the time window of a leaked `Authorization` header to maximum 6 hours based on the server clock.
+
+In addition the `expiredAt` field of the session is checked to make sure the session is still valid. This is explained in more detail a bit further down on this page.
 
 https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/createServer.ts#L39-L70
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/authentication/getSessionIncludingUserBySessionAuthorization.ts#L45
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/authentication/getSessionIncludingUserBySessionAuthorization.ts#L14-L43
 
 Here is an example of a resolver that requires a valid user.
 
@@ -54,21 +74,37 @@ https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/database/dev
 
 ## Websocket Connections
 
-For the staging and production environments a `wss` connection is required. The websocket connection is authenticated by sending the `sessionKey` as a query parameter and validated before establishing the connection.
+For the staging and production environments a `wss` connection is required. The websocket connection is authenticated by sending an authorization token as a query parameter and validated before establishing the connection.
 
 ```js
-`${host}/${docId}?sessionKey=${sessionKey}`;
+`${host}/${docId}?sessionKey=${authorizationToken}`;
 ```
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/createServer.ts#L225-L261
+Note: the query parameter is still called `sessionKey` even though it's not the `sessionKey` from the OPAQUE flow. The naming will be changed in the future.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/backend/src/createServer.ts#L227-L263
+
+### Authenticated Users
+
+For authenticated users the authorization token is constructed like the one for HTTP requests `${sessionToken}|${datetime}|${sessionDatetimeSubkey}` and validated the same way on the server.
+
+### Document Share Links
+
+For document share links a unique authorization token is generated for each document share link and stored in the `DocumentShareLink` table.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/backend/prisma/schema.prisma#L342
+
+When opening a document share link first the document share link is retrieved based on a token which is part of the share URL. The `websocketSessionKey` is contained in this response and to establish the websocket connection the client has to send the `websocketSessionKey` as a query parameter for the `sessionKey`.
+
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/sharePageScreen/sharePageScreenMachine.ts#L113-L118
 
 ## Possible Improvement
 
 ### Encrypting the transport layer
 
-In our threat model we assume a HTTPS connection to the server is secure and can't be intercepted. This assumption could be reduces (not eliminated) by encrypting each request to a server and response back to the client with the `session_key`.
+In our threat model we assume a HTTPS connection to the server is secure and can't be intercepted. This assumption could be reduces (not eliminated) by encrypting each request to a server and response back to the client with the `sessionKey`.
 
-For example the client could use the `session_key` to encrypt & MAC the request body. In addition a UTC timestamp could be added and make sure neither the client nor the server accept a request older than 4 hours or in the future and therefor prevent replay attacks.
+For example the client could use the `sessionKey` to encrypt & MAC the request body. In addition a UTC timestamp could be added and make sure neither the client nor the server accept a request older than 4 hours or in the future and therefor prevent replay attacks.
 
 ### Session validation for GraphQL requests
 
