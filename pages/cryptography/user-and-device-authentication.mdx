@@ -62,18 +62,18 @@ webDeviceCiphertext = encrypt(
 opaque_login
 https://github.com/serenity-kit/Serenity/blob/main/apps/app/components/login/LoginForm.tsx#L70-L75
 
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/loginHelper.ts#L65-L86
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/loginHelper.ts#L65-L76
 
-decryptMainDevice
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/loginHelper.ts#L88-L92
+load the latest user chain and decryptMainDevice
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/loginHelper.ts#L78-L87
 
 https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/decryptMainDevice/decryptMainDevice.ts
 
 UserChain.addDevice
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/loginHelper.ts#L140-L150
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/loginHelper.ts#L124-L139
 
 sign sessionToken to verify the client has access to the private key of the new device (to prevent a MITM attack replacing the device)
-https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/loginHelper.ts#L157-L162
+https://github.com/serenity-kit/Serenity/blob/main/apps/app/utils/authentication/loginHelper.ts#L141-L146
 
 After the device was added to the user, the client starts adding the device to known workspaces. This is triggered here:
 
