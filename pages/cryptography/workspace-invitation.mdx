@@ -27,8 +27,8 @@ In order to establish a secure trust relationship the invitation link contains a
 
 ## Cryptographic Dependencies and actual implementation
 
-- randomInt: `sodium.randombytes_uniform(2 ** 31 - 1)` // in JS a larger upper bound doesn't seem possible, see https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/kdfDeriveFromKey/kdfDeriveFromKey.ts#L16
-- kdf: `sodium.crypto_kdf_derive_from_key(crypto_aead_xchacha20poly1305_ietf_KEYBYTES, subkeyId, context, key)`
+- generateSubkeyId: `sodium.randombytes_buf(16)`
+- kdf: `sodium.crypto_kdf_hkdf_sha256_expand(sodium.crypto_kdf_hkdf_sha256_extract(key, subkeyId), context, crypto_aead_xchacha20poly1305_ietf_KEYBYTES)`
 - generateNonce: `sodium.randombytes_buf(sodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES)`
 - encryptAead: `sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(message, additionalData, nonce, key)`
 - decryptAead: `sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(ciphertext, additionalData, nonce, key)`
@@ -88,7 +88,7 @@ https://github.com/serenity-kit/Serenity/blob/main/apps/app/navigation/screens/a
 The normale [registration process](./user-registration#steps-without-workspace-invitation) happens with a few differences. After finish creating a `mainDevice` the `invitationSigningKeyPairSeed` is encrypted.
 
 ```ts
-subkeyId = randomInt();
+subkeyId = generateSubkeyId();
 key = kdf(subkeyId, "wsinvite", exportKey); // the exportKey is 64 bytes long, so only the first 32 bytes are used
 nonce = generateNonce();
 ciphertext = encryptAead(invitationSigningKeyPairSeed, "", nonce, key);

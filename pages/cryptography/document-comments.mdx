@@ -13,8 +13,8 @@ The comments don't need to be in the document since they can reference a positio
 
 ## Cryptographic Dependencies and actual implementation
 
-- randomInt: `sodium.randombytes_uniform(2 ** 31 - 1)` // in JS a larger upper bound doesn't seem possible, see https://github.com/serenity-kit/Serenity/blob/main/packages/common/src/kdfDeriveFromKey/kdfDeriveFromKey.ts#L16
-- kdf: `sodium.crypto_kdf_derive_from_key(crypto_aead_xchacha20poly1305_ietf_KEYBYTES, subkeyId, context, key)`
+- generateSubkeyId: `sodium.randombytes_buf(16)`
+- kdf: `sodium.crypto_kdf_hkdf_sha256_expand(sodium.crypto_kdf_hkdf_sha256_extract(key, subkeyId), context, crypto_aead_xchacha20poly1305_ietf_KEYBYTES)`
 - generateNonce: `sodium.randombytes_buf(sodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES)`
 - encryptAead: `sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(message, additionalData, nonce, key)`
 - decryptAead: `sodium.crypto_aead_xchacha20poly1305_ietf_decrypt(ciphertext, additionalData, nonce, key)`
@@ -32,7 +32,7 @@ https://github.com/serenity-kit/Serenity/blob/main/apps/app/machines/commentsMac
 When creating a comment first a commentKey is derived from the currently active snapshotKey. The commentKey is used to encrypt the comment.
 
 ```ts
-subkeyId = randomInt();
+subkeyId = generateSubkeyId();
 commentKey = kdf(subkeyId, "comment_", snapshotKey);
 nonce = generateNonce();
 additionalAuthenticatedData = canonicalize(
@@ -103,7 +103,7 @@ It's very similar to creating a comment. The main difference is that the AAD is 
 When creating a comment reply first a commentKey is derived from the currently active snapshotKey. The commentReplyKey is used to encrypt the comment.
 
 ```ts
-subkeyId = randomInt();
+subkeyId = generateSubkeyId();
 commentReplyKey = kdf(subkeyId, "comment_", snapshotKey);
 nonce = generateNonce();
 additionalAuthenticatedData = canonicalize(
