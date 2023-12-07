@@ -67,3 +67,49 @@ https://github.com/serenity-kit/Serenity/blob/main/packages/editor-file-extensio
 When pasted again somewhere else in the same editor the key is added again and it's not necessary to upload the file again:
 https://github.com/serenity-kit/Serenity/blob/main/packages/editor-file-extension/src/fileNodeExtension.ts#L98
 https://github.com/serenity-kit/Serenity/blob/main/packages/editor-file-extension/src/fileNodeExtension.ts#L123
+
+## R2 CORS Setup
+
+Production environment:
+
+```json
+[
+  {
+    "AllowedOrigins": [
+      "https://www.serenityapp.page"
+    ],
+    "AllowedMethods": [
+      "GET",
+      "PUT",
+      "HEAD"
+    ],
+    "AllowedHeaders": [
+      "*"
+    ],
+    "ExposeHeaders": [],
+    "MaxAgeSeconds": 3000
+  }
+]
+```
+
+Staging environment:
+
+```json
+[
+  {
+    "AllowedOrigins": [
+      "https://www.serenity.li"
+    ],
+    "AllowedMethods": [
+      "GET",
+      "PUT",
+      "HEAD"
+    ],
+    "AllowedHeaders": [
+      "*"
+    ],
+    "ExposeHeaders": [],
+    "MaxAgeSeconds": 3000
+  }
+]
+```
