@@ -206,3 +206,71 @@ When resolving the state on the backend also the knownVersion has to passed in. 
 ## Miscellaneous
 
 All types are documented here: https://github.com/serenity-kit/Serenity/blob/main/packages/user-chain/src/types.ts
+
+## Proposed Modifications
+
+The following is a proposal to modify the above spec with the following key goals:
+
+- **Excluding Web Logins from the Chain**: It is suggested that web logins should not be recorded on the user-chain. This approach aims to prevent the chain from becoming excessively long due to frequent browser logins.
+- **Validation of Web Login Changes**: To validate changes made by a user via a web login, a method similar to Apple's end-to-end encryption for iCloud. The process involves using a device already on the user-chain to authorize web sessions.
+
+### Ephemeral Keys for Browser Sessions
+
+When a user logs into the web client (like iCloud.com), the browser requests authorization from a user’s device (like an iPhone) already on the user-chain.
+The authorizing device sends a set of ephemeral keys, signed with its user-chain keys, to the browser. These keys have an expiration date, suggested to be around 30 days (`BROWSER_SESSION_LENGTH`).
+
+The keys are transferred securely, potentially using a QR code scan or a similar secure method to prevent Man-in-the-Middle attacks.
+
+The Serenity Notes server acts as a middle-man during the ephemeral key transfer, ensuring secure communication between the browser and the authorizing device.
+
+### Expiration and Chain Integrity
+
+The ephemeral keys, being temporary, are not stored on the user-chain, preserving the chain's integrity and preventing length explosion.
+The user-chain, however, stores the configuration value `BROWSER_SESSION_LENGTH`, which is used by the Serenity server and other clients to determine the validity period of the ephemeral keys.
+
+### User Experience Considerations
+
+While this approach adds a step to the login process, it is likened to experiences users have with second-factor authentication systems. The balance between security and convenience is considered, with the suggestion to set the default expiration of the ephemeral keys to 30 days.
+
+### Implementation and Impact
+This proposal would require substantial changes to the current implementation of the user-chain, particularly in how web logins are handled. It introduces a more dynamic and secure method of handling browser sessions, aligning with modern security practices like those employed by Apple.
+
+Integrating this proposal into the user-chain system underlines a commitment to security and user convenience. It emphasizes the importance of flexible, yet robust, security mechanisms in managing digital identities and device authentications, especially in a web context.
+
+### Key Components and Process 
+
+#### Ephemeral Key Generation
+When a user attempts to log in via a web browser, the system triggers a request for authorization from a device already on the user-chain (e.g., a smartphone).
+The authorized device generates a set of ephemeral keys, including a signing key and possibly a Diffie-Hellman (DH) key, for the web session. These keys are temporary and have an expiration date.
+The generation uses cryptographic functions consistent with the user-chain system, like sodium.crypto_sign_detached for signing.
+
+#### Key Signing
+The ephemeral keys are signed using the private key of the authorizing device, which is already part of the user-chain.
+This ensures that the ephemeral keys can be linked back to a device that is verifiably part of the user's secure environment.
+
+#### Secure Key Transfer
+The transfer of ephemeral keys from the authorizing device to the web browser should be secured against Man-in-the-Middle (MitM) attacks.
+Implement a secure channel, potentially using QR codes or a secure web socket, facilitated by the Serenity server as a trustworthy intermediary.
+The transfer might involve a DH key exchange for an additional layer of security.
+
+#### Key Expiration and Renewal
+Ephemeral keys expire after a predefined duration of `BROWSER_SESSION_LENGTH`, which could be set to 30 days by default.
+Upon expiration, the user must re-authorize their web session through the same process to continue accessing their account via the browser.
+
+#### Integration with User-Chain
+The user-chain stores the `BROWSER_SESSION_LENGTH` configuration but does not store the ephemeral keys themselves, thus avoiding chain length explosion.
+The chain’s integrity is maintained as the ephemeral keys are indirectly authenticated via the signing device’s keys, which are part of the user-chain.
+
+#### Validation of Web Session Actions
+Actions taken during the web session are validated using the ephemeral keys.
+The system checks whether the keys are within their valid time frame and correctly signed by a device on the user-chain.
+
+#### Compatibility and Versioning
+- Ensure that the implementation of this ephemeral key system is compatible with the existing user-chain protocol, including handling versioning effectively.
+- Update the client and server software to understand and correctly process these new types of key authorization and validation events.
+
+#### Considerations for Implementation
+- **Security**: Rigorously test the security of the ephemeral key generation, transfer, and validation processes to prevent any vulnerabilities.
+- **User Experience**: Balance security with user convenience. The process should be intuitive and not overly burdensome for the user.
+- **Documentation and Transparency**: Clearly document the changes and the reasons behind them for transparency and ease of understanding for all stakeholders.
+- **Compliance and Legal Considerations**: Ensure that the implementation complies with relevant data protection and privacy laws.
